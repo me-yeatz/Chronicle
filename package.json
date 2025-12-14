@@ -1,0 +1,62 @@
+{
+  "name": "chronicle",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Design your time. Write your story. A minimalist personal planning and journaling app powered by Gemini AI.",
+  "author": "me-yeatz",
+  "license": "MIT",
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "vite build && node scripts/generate-ico.mjs && electron-builder",
+    "electron:build:win": "vite build && node scripts/generate-ico.mjs && electron-builder --win",
+    "pwa:zip": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"New-Item -ItemType Directory -Force -Path release | Out-Null; Compress-Archive -Path dist\\* -DestinationPath release\\chronicle-pwa.zip -Force\""
+  },
+  "dependencies": {
+    "@google/genai": "^1.33.0",
+    "lucide-react": "^0.561.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "recharts": "^3.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.1",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "png-to-ico": "^3.0.1",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "vite-plugin-pwa": "^1.2.0",
+    "wait-on": "^9.0.3"
+  },
+  "build": {
+    "appId": "com.yeatz.chronicle",
+    "productName": "Chronicle",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": false
+    }
+  }
+}
