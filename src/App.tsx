@@ -10,7 +10,7 @@ import RemindersView from './components/RemindersView';
 import PasswordVault from './components/PasswordVault';
 import AIChat from './components/AIChat';
 import { PlanEvent, UserProfile, CategoryItem, Credential, DEFAULT_CATEGORIES, Category } from './types';
-import { Plus, Bell, Sparkles, Calendar as CalendarIcon, ArrowUpRight, Check, Feather } from 'lucide-react';
+import { Plus, Bell, Sparkles, Calendar as CalendarIcon, ArrowUpRight, Check, Feather, ChevronLeft, Lock, BarChart2 } from 'lucide-react';
 import { analyzeSchedule } from './services/geminiService';
 
 const DEFAULT_USER: UserProfile = {
@@ -231,27 +231,40 @@ const App: React.FC = () => {
   }, [events]);
 
   return (
-    <div className="min-h-screen bg-transparent font-sans flex" onClick={() => isNotificationsOpen && setIsNotificationsOpen(false)}>
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        user={userProfile}
-        onSettingsClick={() => setIsSettingsOpen(true)}
-        onLogout={handleLogout}
-      />
+    <div className="min-h-screen bg-transparent font-sans flex flex-col" onClick={() => isNotificationsOpen && setIsNotificationsOpen(false)}>
+      {/* Sidebar - Hidden on mobile, visible on medium screens and above */}
+      <div className="hidden md:block">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          user={userProfile}
+          onSettingsClick={() => setIsSettingsOpen(true)}
+          onLogout={handleLogout}
+        />
+      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 ml-20 lg:ml-72 relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto transition-all duration-300">
+      {/* Main Content - Full width on mobile, adjusted on larger screens */}
+      <div className={activeTab === 'dashboard' ? "flex-1 w-full relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto transition-all duration-300" : "flex-1 w-full md:ml-20 lg:ml-72 relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto transition-all duration-300"}>
         
         {/* Header - Glass Style */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-10 gap-4 relative z-30">
            <div className="bg-white/30 backdrop-blur-sm p-5 rounded-3xl border border-white/20 inline-block w-full md:w-auto shadow-sm">
              <div className="flex items-center gap-4">
+                {/* Mobile Back Button when not on dashboard */}
+                {activeTab !== 'dashboard' && (
+                  <button
+                    onClick={() => setActiveTab('dashboard')}
+                    className="md:hidden p-2 rounded-2xl bg-white/40 hover:bg-white/60 text-charcoal transition-colors"
+                    title="Back to Dashboard"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                )}
                 {/* Logo Section - Place logo.png in your public folder */}
                 <div className="w-14 h-14 md:w-16 md:h-16 bg-white/40 rounded-2xl flex items-center justify-center shadow-inner border border-white/40 shrink-0">
-                   <img 
-                      src="/logo.png" 
-                      alt="Chronicle Logo" 
+                   <img
+                      src="/logo.png"
+                      alt="Chronicle Logo"
                       className="w-10 h-10 md:w-12 md:h-12 object-contain opacity-90"
                       onError={(e) => {
                         // Fallback if image not found
@@ -260,7 +273,7 @@ const App: React.FC = () => {
                       }}
                    />
                    {/* Fallback Icon if image is missing */}
-                   <Feather className="hidden w-8 h-8 text-charcoal/80" style={{display: 'none'}} /> 
+                   <Feather className="hidden w-8 h-8 text-charcoal/80" style={{display: 'none'}} />
                 </div>
 
                 <div>
@@ -461,6 +474,34 @@ const App: React.FC = () => {
           {activeTab === 'aichat' && <AIChat />}
 
         </main>
+      </div>
+
+      {/* Bottom Navigation for Mobile */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/30 backdrop-blur-2xl border-t border-white/40 md:hidden z-50">
+        <div className="flex justify-around items-center p-3">
+          {[
+            { id: 'dashboard', icon: CalendarIcon, label: 'Timeline' },
+            { id: 'reminders', icon: Bell, label: 'Reminders' },
+            { id: 'vault', icon: Lock, label: 'Vault' },
+            { id: 'journal', icon: Feather, label: 'Journal' },
+            { id: 'aichat', icon: Sparkles, label: 'AI Chat' },
+            { id: 'stats', icon: BarChart2, label: 'Stats' },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`flex flex-col items-center p-2 rounded-xl transition-colors ${
+                activeTab === item.id
+                  ? 'text-charcoal bg-white/50'
+                  : 'text-charcoal/60 hover:text-charcoal hover:bg-white/20'
+              }`}
+              title={item.label}
+            >
+              <item.icon size={20} />
+              <span className="text-[9px] font-bold mt-1">{item.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <EventModal

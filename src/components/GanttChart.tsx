@@ -120,11 +120,11 @@ const GanttChart: React.FC<GanttChartProps> = ({ events, onEventClick, categorie
              {dates[0]?.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})} - {dates[dates.length-1]?.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
           </p>
         </div>
-        
+
         {/* Controls */}
         <div className="flex items-center gap-1 bg-white/40 p-1 rounded-2xl border border-white/40 backdrop-blur-sm shadow-sm">
            <button onClick={() => handlePan(-7)} className="p-2 hover:bg-white/60 rounded-xl text-charcoal/70 transition-colors" title="Previous Week"><ChevronLeft size={18}/></button>
-           <button onClick={resetView} className="p-2 hover:bg-white/60 rounded-xl text-charcoal/70 transition-colors" title="Reset to Today"><RotateCcw size={16}/></button>
+           <button onClick={resetView} className="p-2 hover:bg-white/60 rounded-xl text-charcoal/70 transition-colors md:hidden" title="Reset to Today"><RotateCcw size={16}/></button>
            <button onClick={() => handlePan(7)} className="p-2 hover:bg-white/60 rounded-xl text-charcoal/70 transition-colors" title="Next Week"><ChevronRight size={18}/></button>
            <div className="w-px h-6 bg-charcoal/10 mx-1"></div>
            <button onClick={() => handleZoom('in')} className="p-2 hover:bg-white/60 rounded-xl text-charcoal/70 transition-colors" title="Zoom In"><ZoomIn size={18}/></button>
@@ -133,19 +133,19 @@ const GanttChart: React.FC<GanttChartProps> = ({ events, onEventClick, categorie
       </div>
       
       {/* Chart Container */}
-      <div 
-        className={`relative border border-white/40 rounded-3xl bg-white/20 overflow-hidden shadow-inner ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+      <div
+        className={`relative border border-white/40 rounded-3xl bg-white/20 overflow-x-auto shadow-inner ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseUp}
       >
         {/* Header Row */}
-        <div className="grid grid-cols-[140px_1fr] bg-white/30 backdrop-blur-md border-b border-white/40 z-20 relative">
-           <div className="p-4 flex items-end border-r border-white/40 font-bold text-xs text-charcoal/50 uppercase tracking-widest bg-white/10">
+        <div className={`grid bg-white/30 backdrop-blur-md border-b border-white/40 z-20 relative grid-cols-[100px_1fr] sm:grid-cols-[120px_1fr] md:grid-cols-[140px_1fr]`}>
+           <div className="p-3 sm:p-4 flex items-end border-r border-white/40 font-bold text-[9px] sm:text-xs text-charcoal/50 uppercase tracking-widest bg-white/10">
              Category
            </div>
            {/* Date Columns */}
-           <div className="grid" style={{ gridTemplateColumns: `repeat(${daysToShow}, 1fr)` }}>
+           <div className="grid" style={{ gridTemplateColumns: `repeat(${daysToShow}, minmax(60px, 1fr))` }}>
               {dates.map((date, i) => {
                  const isToday = date.toDateString() === new Date().toDateString();
                  return (
@@ -172,15 +172,15 @@ const GanttChart: React.FC<GanttChartProps> = ({ events, onEventClick, categorie
                const categoryEvents = groupedEvents[categoryName] || [];
                const colorClass = categoryColors[categoryName] || 'bg-charcoal';
                return (
-                   <div key={categoryName} className="grid grid-cols-[140px_1fr] group transition-colors hover:bg-white/20">
-                       <div className="p-4 flex items-center border-r border-white/40 bg-white/5 group-hover:bg-white/20 transition-colors">
-                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-3 shadow-sm ${colorClass.replace('bg-', 'bg-opacity-20 text-')}`}>
-                               <div className={`w-3 h-3 rounded-full ${colorClass}`}></div>
+                   <div key={categoryName} className="grid grid-cols-[100px_1fr] sm:grid-cols-[120px_1fr] md:grid-cols-[140px_1fr] group transition-colors hover:bg-white/20">
+                       <div className="p-3 sm:p-4 flex items-center border-r border-white/40 bg-white/5 group-hover:bg-white/20 transition-colors">
+                           <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mr-2 sm:mr-3 shadow-sm ${colorClass.replace('bg-', 'bg-opacity-20 text-')}`}>
+                               <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${colorClass}`}></div>
                            </div>
-                           <span className="font-bold text-charcoal text-xs truncate">{categoryName}</span>
+                           <span className="font-bold text-[9px] sm:text-xs text-charcoal truncate">{categoryName}</span>
                        </div>
                        <div className="relative h-20 w-full">
-                           <div className="absolute inset-0 grid pointer-events-none" style={{ gridTemplateColumns: `repeat(${daysToShow}, 1fr)` }}>
+                           <div className="absolute inset-0 grid pointer-events-none" style={{ gridTemplateColumns: `repeat(${daysToShow}, minmax(60px, 1fr))` }}>
                                {dates.map((date, i) => {
                                    const isToday = date.toDateString() === new Date().toDateString();
                                    return (
