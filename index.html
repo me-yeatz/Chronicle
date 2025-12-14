@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chronicle | Design your time</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Design your time. Write your story. A minimalist personal planning and journaling app powered by Gemini AI.">
+    <meta name="theme-color" content="#32292F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Chronicle">
+
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" href="/assets/icon-192.png">
+    <link rel="apple-touch-icon" href="/assets/icon-192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              bone: '#F3EFE0',
+              charcoal: '#32292F',
+              'charcoal-light': '#4A3D46',
+              sage: '#8A9A5B',
+              terra: '#BC4B51',
+              sand: '#D4C5C0',
+              peach: '#FFAB91',
+              cream: '#FFF5D1',
+              'cream-dark': '#FFEebb',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Cinzel', 'serif'],
+            },
+            borderRadius: {
+              '4xl': '2rem',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #F3EFE0;
+        color: #32292F;
+        overflow-x: hidden; /* Prevent scroll from absolute blobs */
+      }
+      /* Custom scrollbar for cleanliness */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #D4C5C0;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #32292F;
+      }
+
+      /* Ambient Background Animations */
+      .ambient-blob {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(80px);
+        z-index: -1;
+        animation: float 20s infinite ease-in-out;
+      }
+      @keyframes float {
+        0% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+        100% { transform: translate(0, 0) scale(1); }
+      }
+      
+      .animation-delay-2000 {
+        animation-delay: 2s;
+      }
+      .animation-delay-4000 {
+        animation-delay: 4s;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "recharts": "https://esm.sh/recharts@^3.5.1",
+    "lucide-react": "https://esm.sh/lucide-react@^0.561.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <!-- Background Gradient Blobs for Glass Effect -->
+    <div class="ambient-blob bg-peach/30 w-[40vw] h-[40vw] top-[-10%] left-[-10%]"></div>
+    <div class="ambient-blob bg-sage/20 w-[35vw] h-[35vw] bottom-[-5%] right-[-5%] animation-delay-2000"></div>
+    <div class="ambient-blob bg-cream/80 w-[25vw] h-[25vw] top-[30%] left-[30%] animation-delay-4000"></div>
+    
+    <div id="root"></div>
+  <script type="module" src="/src/index.tsx"></script>
+</body>
+</html>
