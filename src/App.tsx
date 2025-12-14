@@ -231,20 +231,17 @@ const App: React.FC = () => {
   }, [events]);
 
   return (
-    <div className="min-h-screen bg-transparent font-sans flex flex-col" onClick={() => isNotificationsOpen && setIsNotificationsOpen(false)}>
-      {/* Sidebar - Hidden on mobile, visible on medium screens and above */}
-      <div className="hidden md:block">
-        <Sidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          user={userProfile}
-          onSettingsClick={() => setIsSettingsOpen(true)}
-          onLogout={handleLogout}
-        />
-      </div>
+    <div className="min-h-screen bg-transparent font-sans flex" onClick={() => isNotificationsOpen && setIsNotificationsOpen(false)}>
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        user={userProfile}
+        onSettingsClick={() => setIsSettingsOpen(true)}
+        onLogout={handleLogout}
+      />
 
-      {/* Main Content - Full width on mobile, adjusted on larger screens */}
-      <div className={activeTab === 'dashboard' ? "flex-1 w-full relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto transition-all duration-300" : "flex-1 w-full md:ml-20 lg:ml-72 relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto transition-all duration-300"}>
+      {/* Main Content - Add padding for bottom navigation on mobile */}
+      <div className={`flex-1 ${activeTab === 'dashboard' ? 'pb-20 md:pb-6' : 'ml-20 lg:ml-72 pb-20 md:pb-6'} relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto transition-all duration-300`}>
         
         {/* Header - Glass Style */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-10 gap-4 relative z-30">
