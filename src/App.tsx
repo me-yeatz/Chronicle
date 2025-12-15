@@ -241,7 +241,7 @@ const App: React.FC = () => {
       />
 
       {/* Main Content - Add padding for bottom navigation on mobile */}
-      <div className={`flex-1 ${activeTab === 'dashboard' ? 'pb-20 md:pb-6' : 'ml-20 lg:ml-72 pb-20 md:pb-6'} relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto transition-all duration-300`}>
+      <div className={`flex-1 md:ml-20 lg:ml-72 pb-20 md:pb-6 relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto transition-all duration-300`}>
         
         {/* Header - Glass Style */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-10 gap-4 relative z-30">

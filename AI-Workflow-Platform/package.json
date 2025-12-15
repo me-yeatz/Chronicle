@@ -1,0 +1,22 @@
+{
+  "name": "ai-workflow-platform",
+  "version": "1.0.0",
+  "description": "An AI-powered automation platform similar to Zapier using Google Gemini",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "^1.33.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "lucide-react": "^0.561.0",
+    "recharts": "^3.5.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "vite": "^6.2.0"
+  }
+}

@@ -1,0 +1,6 @@
+node_modules
+release
+.env.local
+*.exe
+electron
+.vercel
