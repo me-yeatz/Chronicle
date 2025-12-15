@@ -97,7 +97,7 @@ Get your Gemini API key from [Google AI Studio](https://aistudio.google.com/)
 
 ## Mobile Preview
 
-![Mobile Screenshot](./assets/Screenshot%20Mobile.png)
+![Mobile Screenshot](./assets/Screenshot_Mobile.png)
 
 ## Project Structure
 
@@ -112,9 +112,8 @@ Chronicle/
 ├── vercel.json                # Vercel deployment config
 ├── .env.local                 # Environment variables (API key)
 ├── assets/
-│   ├── chronicle.png          # App icon
 │   ├── Screenshot_Desktop.png # Desktop screenshot
-│   └── Screenshot Mobile.png  # Mobile screenshot
+│   └── Screenshot_Mobile.png  # Mobile screenshot
 ├── components/
 │   ├── Sidebar.tsx            # Navigation sidebar
 │   ├── GanttChart.tsx         # Interactive timeline
