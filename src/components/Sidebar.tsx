@@ -16,12 +16,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onSett
     { id: 'reminders', icon: BellRing, label: 'Reminders' },
     { id: 'vault', icon: Lock, label: 'Vault' },
     { id: 'journal', icon: Book, label: 'Journal' },
-    { id: 'stats', icon: BarChart2, label: 'Analytics' },
+    { id: 'stats', icon: BarChart2, label: 'Stats & Insights' },
     { id: 'aichat', icon: MessageSquare, label: 'AI Chat' },
   ];
 
   return (
-    <div className="w-20 lg:w-72 bg-white/30 backdrop-blur-2xl border-r border-white/40 h-screen flex flex-col justify-between fixed left-0 top-0 z-50 shadow-sm transition-all duration-300">
+    <div className="hidden md:flex w-20 lg:w-72 bg-white/30 backdrop-blur-2xl border-r border-white/40 h-screen flex-col justify-between fixed left-0 top-0 z-50 shadow-sm transition-all duration-300">
       <div className="p-6">
         {/* User Card with Edit Button */}
         <div className="p-4 bg-white/40 backdrop-blur-md rounded-3xl shadow-sm mb-10 border border-white/50 relative group">
