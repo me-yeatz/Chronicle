@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import GanttChart from './components/GanttChart';
 import StatsChart from './components/StatsChart';
@@ -9,9 +9,19 @@ import Journal from './components/Journal';
 import RemindersView from './components/RemindersView';
 import PasswordVault from './components/PasswordVault';
 import AIChat from './components/AIChat';
+import StorageNotification, { StorageWarningBanner } from './components/StorageNotification';
 import { PlanEvent, UserProfile, CategoryItem, Credential, DEFAULT_CATEGORIES, Category } from './types';
 import { Plus, Bell, Sparkles, Calendar as CalendarIcon, ArrowUpRight, Check, Feather, ChevronLeft, Lock, BarChart2 } from 'lucide-react';
 import { analyzeSchedule } from './services/geminiService';
+import {
+  loadFromStorage,
+  saveToStorage,
+  StorageResult,
+  getStorageInfo,
+  isStorageNearFull,
+  clearAllChronicleData,
+  STORAGE_KEYS
+} from './services/storageService';
 
 const DEFAULT_USER: UserProfile = {
   name: "Your Name",
@@ -61,31 +71,6 @@ const INITIAL_CREDENTIALS: Credential[] = [
   }
 ];
 
-// localStorage keys
-const STORAGE_KEYS = {
-  EVENTS: 'chronicle_events',
-  CREDENTIALS: 'chronicle_credentials',
-  USER_PROFILE: 'chronicle_user_profile',
-  CATEGORIES: 'chronicle_categories',
-};
-
-// Helper functions for localStorage
-const loadFromStorage = <T,>(key: string, fallback: T): T => {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : fallback;
-  } catch {
-    return fallback;
-  }
-};
-
-const saveToStorage = <T,>(key: string, data: T): void => {
-  try {
-    localStorage.setItem(key, JSON.stringify(data));
-  } catch (error) {
-    console.error('Failed to save to localStorage:', error);
-  }
-};
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -109,25 +94,52 @@ const App: React.FC = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
+  // Storage notification state
+  const [storageNotification, setStorageNotification] = useState<StorageResult | null>(null);
+  const [showStorageWarning, setShowStorageWarning] = useState(false);
+  const [storagePercentage, setStoragePercentage] = useState(0);
+
+  // Check storage status on mount and after saves
+  const checkStorageStatus = useCallback(() => {
+    const info = getStorageInfo();
+    setStoragePercentage(info.percentage);
+    setShowStorageWarning(isStorageNearFull());
+  }, []);
+
+  useEffect(() => {
+    checkStorageStatus();
+  }, [checkStorageStatus]);
+
+  // Helper to save with notification
+  const saveWithNotification = useCallback(<T,>(key: string, data: T): boolean => {
+    const result = saveToStorage(key, data);
+    if (!result.success) {
+      setStorageNotification(result);
+      return false;
+    }
+    checkStorageStatus();
+    return true;
+  }, [checkStorageStatus]);
+
   // Persist events to localStorage whenever they change
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.EVENTS, events);
-  }, [events]);
+    saveWithNotification(STORAGE_KEYS.EVENTS, events);
+  }, [events, saveWithNotification]);
 
   // Persist credentials to localStorage whenever they change
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.CREDENTIALS, credentials);
-  }, [credentials]);
+    saveWithNotification(STORAGE_KEYS.CREDENTIALS, credentials);
+  }, [credentials, saveWithNotification]);
 
   // Persist user profile to localStorage whenever it changes
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.USER_PROFILE, userProfile);
-  }, [userProfile]);
+    saveWithNotification(STORAGE_KEYS.USER_PROFILE, userProfile);
+  }, [userProfile, saveWithNotification]);
 
   // Persist categories to localStorage whenever they change
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.CATEGORIES, categories);
-  }, [categories]);
+    saveWithNotification(STORAGE_KEYS.CATEGORIES, categories);
+  }, [categories, saveWithNotification]);
 
   const handleSaveEvent = (event: PlanEvent) => {
     if (editingEvent) {
@@ -170,11 +182,8 @@ const App: React.FC = () => {
   };
 
   const handleClearAllData = () => {
-    // Clear all data from localStorage
-    localStorage.removeItem(STORAGE_KEYS.EVENTS);
-    localStorage.removeItem(STORAGE_KEYS.CREDENTIALS);
-    localStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
-    localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
+    // Clear all data from localStorage using the storage service
+    clearAllChronicleData();
 
     // Reset state to defaults
     setEvents(INITIAL_EVENTS);
@@ -182,6 +191,9 @@ const App: React.FC = () => {
     setUserProfile(DEFAULT_USER);
     setCategories(DEFAULT_CATEGORIES);
     setAiInsight('');
+
+    // Update storage status
+    checkStorageStatus();
   };
 
   const handleSaveCategories = (newCategories: CategoryItem[]) => {
@@ -518,6 +530,18 @@ const App: React.FC = () => {
         onClearData={handleClearAllData}
         categories={categories}
         onSaveCategories={handleSaveCategories}
+      />
+
+      {/* Storage Notifications */}
+      <StorageNotification
+        notification={storageNotification}
+        onDismiss={() => setStorageNotification(null)}
+      />
+
+      <StorageWarningBanner
+        show={showStorageWarning}
+        percentage={storagePercentage}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
     </div>
   );

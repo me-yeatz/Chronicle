@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Camera, User, Briefcase, Trash2, Plus, Pencil, Tag, Key } from 'lucide-react';
+import { X, Save, Camera, User, Briefcase, Trash2, Plus, Pencil, Tag, Key, HardDrive, Download, Upload } from 'lucide-react';
 import { UserProfile, CategoryItem, CATEGORY_COLORS } from '../types';
+import { getStorageInfo, getChronicleStorageInfo, exportAllData, importData } from '../services/storageService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -28,7 +29,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState(CATEGORY_COLORS[0].value);
   const [showAddCategory, setShowAddCategory] = useState(false);
+  const [storageInfo, setStorageInfo] = useState(getStorageInfo());
+  const [chronicleStorage, setChronicleStorage] = useState(getChronicleStorageInfo());
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,6 +43,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       setShowClearConfirm(false);
       setEditingCategory(null);
       setShowAddCategory(false);
+      setStorageInfo(getStorageInfo());
+      setChronicleStorage(getChronicleStorageInfo());
+      setImportError(null);
+      setImportSuccess(false);
     }
   }, [isOpen, user, categories]);
 
@@ -110,6 +120,49 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         c.id === editingCategory.id ? editingCategory : c
       ));
       setEditingCategory(null);
+    }
+  };
+
+  const handleExportData = () => {
+    const data = exportAllData();
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chronicle-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      const result = importData(content);
+      if (result.success) {
+        setImportSuccess(true);
+        setImportError(null);
+        // Refresh storage info
+        setStorageInfo(getStorageInfo());
+        setChronicleStorage(getChronicleStorageInfo());
+        // Reload after a short delay to show success message
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        setImportError(result.message || 'Failed to import data');
+        setImportSuccess(false);
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    if (importInputRef.current) {
+      importInputRef.current.value = '';
     }
   };
 
@@ -332,6 +385,94 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 placeholder="Enter Gemini API Key"
               />
               <p className="text-[10px] text-charcoal/40 mt-2">Stored locally only. Not shared or synced.</p>
+            </div>
+
+            {/* Storage Section */}
+            <div className="bg-white/40 p-4 rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <HardDrive size={16} className="text-charcoal/50" />
+                <label className="text-xs font-bold uppercase tracking-wider text-charcoal/50">Local Storage</label>
+              </div>
+
+              {/* Storage Usage Bar */}
+              <div className="mb-4">
+                <div className="flex justify-between text-xs text-charcoal/70 mb-1">
+                  <span>Used: {storageInfo.usedFormatted}</span>
+                  <span>Total: {storageInfo.totalFormatted}</span>
+                </div>
+                <div className="bg-white/50 rounded-full h-3 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      storageInfo.percentage >= 90 ? 'bg-terra' :
+                      storageInfo.percentage >= 70 ? 'bg-amber-500' : 'bg-sage'
+                    }`}
+                    style={{ width: `${storageInfo.percentage}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-charcoal/50 mt-1 text-right">{storageInfo.percentage}% used</p>
+              </div>
+
+              {/* Storage Breakdown */}
+              <div className="bg-white/30 rounded-xl p-3 mb-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-charcoal/50 mb-2">Storage Breakdown</p>
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex justify-between text-charcoal/70">
+                    <span>Events & Notes</span>
+                    <span className="font-medium">{chronicleStorage.EVENTS}</span>
+                  </div>
+                  <div className="flex justify-between text-charcoal/70">
+                    <span>Credentials</span>
+                    <span className="font-medium">{chronicleStorage.CREDENTIALS}</span>
+                  </div>
+                  <div className="flex justify-between text-charcoal/70">
+                    <span>Profile</span>
+                    <span className="font-medium">{chronicleStorage.USER_PROFILE}</span>
+                  </div>
+                  <div className="flex justify-between text-charcoal/70">
+                    <span>Categories</span>
+                    <span className="font-medium">{chronicleStorage.CATEGORIES}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Backup & Restore */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportData}
+                  className="flex-1 flex items-center justify-center gap-2 bg-sage/20 hover:bg-sage/30 text-charcoal py-3 rounded-xl font-bold text-sm transition-colors"
+                >
+                  <Download size={16} />
+                  <span>Export Backup</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => importInputRef.current?.click()}
+                  className="flex-1 flex items-center justify-center gap-2 bg-peach/30 hover:bg-peach/50 text-charcoal py-3 rounded-xl font-bold text-sm transition-colors"
+                >
+                  <Upload size={16} />
+                  <span>Import Backup</span>
+                </button>
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportData}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Import Status Messages */}
+              {importError && (
+                <p className="text-xs text-terra mt-2 text-center">{importError}</p>
+              )}
+              {importSuccess && (
+                <p className="text-xs text-sage mt-2 text-center font-medium">Data imported successfully! Reloading...</p>
+              )}
+
+              <p className="text-[10px] text-charcoal/40 mt-3 text-center">
+                All data is stored locally in your browser. Export regularly to keep backups.
+              </p>
             </div>
 
             {/* Save Button */}
