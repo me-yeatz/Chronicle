@@ -21,6 +21,7 @@ export const STORAGE_KEYS = {
   CREDENTIALS: 'chronicle_credentials',
   USER_PROFILE: 'chronicle_user_profile',
   CATEGORIES: 'chronicle_categories',
+  NOTES: 'chronicle_notes',
   AI_CHAT_HISTORY: 'chronicle_ai_chat',
 } as const;
 

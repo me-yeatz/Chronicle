@@ -62,6 +62,17 @@ export interface UserProfile {
   aiApiKey?: string;
 }
 
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string; // ISO Date String
+  category: string;
+  isReminderOn: boolean;
+  reminderDate?: string; // ISO Date String (YYYY-MM-DD)
+  isReminderDismissed: boolean;
+}
+
 export interface AIInsight {
   type: 'conflict' | 'suggestion' | 'summary';
   message: string;

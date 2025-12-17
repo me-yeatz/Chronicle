@@ -1,14 +1,15 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { PlanEvent, CategoryItem } from '../types';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw, MoveHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw, MoveHorizontal, Settings } from 'lucide-react';
 
 interface GanttChartProps {
   events: PlanEvent[];
   onEventClick: (event: PlanEvent) => void;
   categories: CategoryItem[];
+  onManageCategories?: () => void;
 }
 
-const GanttChart: React.FC<GanttChartProps> = ({ events, onEventClick, categories }) => {
+const GanttChart: React.FC<GanttChartProps> = ({ events, onEventClick, categories, onManageCategories }) => {
   const [viewStartDate, setViewStartDate] = useState(new Date());
   const [daysToShow, setDaysToShow] = useState(14);
   const [isDragging, setIsDragging] = useState(false);
@@ -141,8 +142,13 @@ const GanttChart: React.FC<GanttChartProps> = ({ events, onEventClick, categorie
       >
         {/* Header Row */}
         <div className={`grid bg-white/30 backdrop-blur-md border-b border-white/40 z-20 relative grid-cols-[100px_1fr] sm:grid-cols-[120px_1fr] md:grid-cols-[140px_1fr]`}>
-           <div className="p-3 sm:p-4 flex items-end border-r border-white/40 font-bold text-[9px] sm:text-xs text-charcoal/50 uppercase tracking-widest bg-white/10">
-             Category
+           <div className="sticky left-0 z-30 p-3 sm:p-4 flex items-end justify-between border-r border-white/40 font-bold text-[9px] sm:text-xs text-charcoal/50 uppercase tracking-widest bg-white/80 backdrop-blur-md">
+             <span>Category</span>
+             {onManageCategories && (
+               <button onClick={(e) => { e.stopPropagation(); onManageCategories(); }} className="p-1 hover:bg-charcoal/10 rounded transition-colors" title="Manage Categories">
+                 <Settings size={12} />
+               </button>
+             )}
            </div>
            {/* Date Columns */}
            <div className="grid" style={{ gridTemplateColumns: `repeat(${daysToShow}, minmax(60px, 1fr))` }}>
@@ -173,7 +179,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ events, onEventClick, categorie
                const colorClass = categoryColors[categoryName] || 'bg-charcoal';
                return (
                    <div key={categoryName} className="grid grid-cols-[100px_1fr] sm:grid-cols-[120px_1fr] md:grid-cols-[140px_1fr] group transition-colors hover:bg-white/20">
-                       <div className="p-3 sm:p-4 flex items-center border-r border-white/40 bg-white/5 group-hover:bg-white/20 transition-colors">
+                       <div className="sticky left-0 z-10 p-3 sm:p-4 flex items-center border-r border-white/40 bg-white/80 backdrop-blur-md group-hover:bg-white/90 transition-colors">
                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mr-2 sm:mr-3 shadow-sm ${colorClass.replace('bg-', 'bg-opacity-20 text-')}`}>
                                <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${colorClass}`}></div>
                            </div>

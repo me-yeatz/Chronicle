@@ -15,7 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onSett
     { id: 'dashboard', icon: Calendar, label: 'Timeline' },
     { id: 'reminders', icon: BellRing, label: 'Reminders' },
     { id: 'vault', icon: Lock, label: 'Vault' },
-    { id: 'journal', icon: Book, label: 'Journal' },
+    { id: 'notes', icon: Book, label: 'Notes' },
     { id: 'stats', icon: BarChart2, label: 'Stats & Insights' },
     { id: 'aichat', icon: MessageSquare, label: 'AI Chat' },
   ];
@@ -66,11 +66,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onSett
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group relative overflow-hidden ${
-                activeTab === item.id
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group relative overflow-hidden ${activeTab === item.id
                   ? 'bg-charcoal text-bone shadow-lg scale-[1.02]'
                   : 'text-gray-600 hover:bg-white/40 hover:text-charcoal'
-              }`}
+                }`}
             >
               {/* Glass shine effect on hover for non-active items */}
               {activeTab !== item.id && (

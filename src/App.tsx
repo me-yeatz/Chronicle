@@ -5,13 +5,13 @@ import StatsChart from './components/StatsChart';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import EventModal from './components/EventModal';
 import SettingsModal from './components/SettingsModal';
-import Journal from './components/Journal';
+import Notes from './components/Notes';
 import RemindersView from './components/RemindersView';
 import PasswordVault from './components/PasswordVault';
 import AIChat from './components/AIChat';
 import StorageNotification, { StorageWarningBanner } from './components/StorageNotification';
-import { PlanEvent, UserProfile, CategoryItem, Credential, DEFAULT_CATEGORIES, Category } from './types';
-import { Plus, Bell, Sparkles, Calendar as CalendarIcon, ArrowUpRight, Check, Feather, ChevronLeft, Lock, BarChart2 } from 'lucide-react';
+import { PlanEvent, UserProfile, CategoryItem, Credential, DEFAULT_CATEGORIES, Category, Note } from './types';
+import { Plus, Bell, Sparkles, Calendar as CalendarIcon, ArrowUpRight, Check, Feather, ChevronLeft, Lock, BarChart2, Book } from 'lucide-react';
 import { analyzeSchedule } from './services/geminiService';
 import {
   loadFromStorage,
@@ -71,11 +71,16 @@ const INITIAL_CREDENTIALS: Credential[] = [
   }
 ];
 
+const INITIAL_NOTES: Note[] = [];
+
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [events, setEvents] = useState<PlanEvent[]>(() =>
     loadFromStorage(STORAGE_KEYS.EVENTS, INITIAL_EVENTS)
+  );
+  const [notes, setNotes] = useState<Note[]>(() =>
+    loadFromStorage(STORAGE_KEYS.NOTES, INITIAL_NOTES)
   );
   const [credentials, setCredentials] = useState<Credential[]>(() =>
     loadFromStorage(STORAGE_KEYS.CREDENTIALS, INITIAL_CREDENTIALS)
@@ -126,6 +131,11 @@ const App: React.FC = () => {
     saveWithNotification(STORAGE_KEYS.EVENTS, events);
   }, [events, saveWithNotification]);
 
+  // Persist notes to localStorage whenever they change
+  useEffect(() => {
+    saveWithNotification(STORAGE_KEYS.NOTES, notes);
+  }, [notes, saveWithNotification]);
+
   // Persist credentials to localStorage whenever they change
   useEffect(() => {
     saveWithNotification(STORAGE_KEYS.CREDENTIALS, credentials);
@@ -166,14 +176,27 @@ const App: React.FC = () => {
   const handleDismissReminder = (event: PlanEvent) => {
     setEvents(events.map(e => e.id === event.id ? { ...e, isReminderDismissed: true } : e));
   };
-  
+
   // Vault Handlers
   const handleAddCredential = (cred: Credential) => {
     setCredentials([...credentials, cred]);
   };
-  
+
   const handleDeleteCredential = (id: string) => {
     setCredentials(credentials.filter(c => c.id !== id));
+  };
+
+  // Notes Handlers
+  const handleAddNote = (note: Note) => {
+    setNotes([note, ...notes]);
+  };
+
+  const handleUpdateNote = (updatedNote: Note) => {
+    setNotes(notes.map(n => n.id === updatedNote.id ? updatedNote : n));
+  };
+
+  const handleDeleteNote = (id: string) => {
+    setNotes(notes.filter(n => n.id !== id));
   };
 
   // Settings handlers
@@ -187,6 +210,7 @@ const App: React.FC = () => {
 
     // Reset state to defaults
     setEvents(INITIAL_EVENTS);
+    setNotes(INITIAL_NOTES);
     setCredentials(INITIAL_CREDENTIALS);
     setUserProfile(DEFAULT_USER);
     setCategories(DEFAULT_CATEGORIES);
@@ -216,31 +240,38 @@ const App: React.FC = () => {
 
   // Trigger analysis on load if empty
   useEffect(() => {
-     if(!aiInsight) triggerAIAnalysis();
+    if (!aiInsight) triggerAIAnalysis();
   }, []);
 
   // Reminder Logic
+  // Reminder Logic
   const activeReminders = useMemo(() => {
-    return events.filter(e => {
+    const eventsReminders = events.filter(e => {
       if (e.reminderSetting === 'none' || e.isReminderDismissed) return false;
-      
       const start = new Date(e.startDate);
       const reminderDate = new Date(start);
-      
-      switch(e.reminderSetting) {
+      switch (e.reminderSetting) {
         case '1-day-before': reminderDate.setDate(start.getDate() - 1); break;
         case '3-days-before': reminderDate.setDate(start.getDate() - 3); break;
         case '1-week-before': reminderDate.setDate(start.getDate() - 7); break;
         case 'same-day': default: break;
       }
-      
-      // Check if today is >= reminderDate
       const todayStr = new Date().toISOString().split('T')[0];
       const reminderStr = reminderDate.toISOString().split('T')[0];
-      
       return todayStr >= reminderStr;
     });
-  }, [events]);
+
+    const notesReminders = notes.filter(n => {
+      if (!n.isReminderOn || !n.reminderDate || n.isReminderDismissed) return false;
+      const todayStr = new Date().toISOString().split('T')[0];
+      return todayStr >= n.reminderDate;
+    });
+
+    return [
+      ...eventsReminders.map(e => ({ id: e.id, title: e.title, type: 'Event', reminderText: e.reminderSetting, original: e, isNote: false })),
+      ...notesReminders.map(n => ({ id: n.id, title: n.title, type: 'Note', reminderText: 'Scheduled', original: n, isNote: true }))
+    ];
+  }, [events, notes]);
 
   return (
     <div className="min-h-screen bg-transparent font-sans flex" onClick={() => isNotificationsOpen && setIsNotificationsOpen(false)}>
@@ -254,143 +285,143 @@ const App: React.FC = () => {
 
       {/* Main Content - Add padding for bottom navigation on mobile */}
       <div className={`flex-1 md:ml-20 lg:ml-72 pb-20 md:pb-6 relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto transition-all duration-300`}>
-        
+
         {/* Header - Glass Style */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-10 gap-4 relative z-30">
-           <div className="bg-white/30 backdrop-blur-sm p-5 rounded-3xl border border-white/20 inline-block w-full md:w-auto shadow-sm">
-             <div className="flex items-center gap-4">
-                {/* Mobile Back Button when not on dashboard */}
-                {activeTab !== 'dashboard' && (
-                  <button
-                    onClick={() => setActiveTab('dashboard')}
-                    className="md:hidden p-2 rounded-2xl bg-white/40 hover:bg-white/60 text-charcoal transition-colors"
-                    title="Back to Dashboard"
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-                )}
-                {/* Logo Section - Place logo.png in your public folder */}
-                <div className="w-14 h-14 md:w-16 md:h-16 bg-white/40 rounded-2xl flex items-center justify-center shadow-inner border border-white/40 shrink-0">
-                   <img
-                      src="/logo.png"
-                      alt="Chronicle Logo"
-                      className="w-10 h-10 md:w-12 md:h-12 object-contain opacity-90"
-                      onError={(e) => {
-                        // Fallback if image not found
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement?.classList.add('fallback-icon');
-                      }}
-                   />
-                   {/* Fallback Icon if image is missing */}
-                   <Feather className="hidden w-8 h-8 text-charcoal/80" style={{display: 'none'}} />
-                </div>
+          <div className="bg-white/30 backdrop-blur-sm p-5 rounded-3xl border border-white/20 inline-block w-full md:w-auto shadow-sm">
+            <div className="flex items-center gap-4">
+              {/* Mobile Back Button when not on dashboard */}
+              {activeTab !== 'dashboard' && (
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className="md:hidden p-2 rounded-2xl bg-white/40 hover:bg-white/60 text-charcoal transition-colors"
+                  title="Back to Dashboard"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+              )}
+              {/* Logo Section - Place logo.png in your public folder */}
+              <div className="w-14 h-14 md:w-16 md:h-16 bg-white/40 rounded-2xl flex items-center justify-center shadow-inner border border-white/40 shrink-0">
+                <img
+                  src="/logo.png"
+                  alt="Chronicle Logo"
+                  className="w-10 h-10 md:w-12 md:h-12 object-contain opacity-90"
+                  onError={(e) => {
+                    // Fallback if image not found
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement?.classList.add('fallback-icon');
+                  }}
+                />
+                {/* Fallback Icon if image is missing */}
+                <Feather className="hidden w-8 h-8 text-charcoal/80" style={{ display: 'none' }} />
+              </div>
 
-                <div>
-                   <h1 className="text-2xl md:text-4xl font-black text-charcoal tracking-tight font-display uppercase flex items-baseline gap-2">
-                     {activeTab === 'dashboard' ? 'Chronicle' :
-                      activeTab === 'journal' ? 'Journal' :
+              <div>
+                <h1 className="text-2xl md:text-4xl font-black text-charcoal tracking-tight font-display uppercase flex items-baseline gap-2">
+                  {activeTab === 'dashboard' ? 'Chronicle' :
+                    activeTab === 'notes' ? 'Notes' :
                       activeTab === 'reminders' ? 'Reminders' :
-                      activeTab === 'vault' ? 'Vault' :
-                      activeTab === 'aichat' ? 'AI Chat' : 'Stats & Insights'}
-                     <span className="text-sm md:text-base font-sans normal-case italic font-light text-charcoal/60 -mb-1">by yeatz</span>
-                   </h1>
-                   <p className="text-[10px] md:text-xs text-charcoal/70 font-bold uppercase tracking-widest mt-1">Design your time | by yeatz2025 powered by Gemini Ai Studio</p>
-                </div>
-             </div>
-           </div>
-           
-           <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto justify-end">
-             <div className="relative">
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setIsNotificationsOpen(!isNotificationsOpen); }}
-                  className={`p-3 md:p-4 rounded-2xl backdrop-blur-md text-charcoal hover:scale-105 transition-transform shadow-sm border border-white/40 hover:bg-white/60 relative ${isNotificationsOpen ? 'bg-white/60' : 'bg-white/40'}`}
-                >
-                  <Bell size={20} className="md:w-6 md:h-6" />
-                  {activeReminders.length > 0 && (
-                    <span className="absolute top-3 right-3 w-2 h-2 md:w-3 md:h-3 bg-terra rounded-full border-2 border-white animate-pulse"></span>
-                  )}
-                </button>
+                        activeTab === 'vault' ? 'Vault' :
+                          activeTab === 'aichat' ? 'AI Chat' : 'Stats & Insights'}
+                  <span className="text-sm md:text-base font-sans normal-case italic font-light text-charcoal/60 -mb-1">by yeatz</span>
+                </h1>
+                <p className="text-[10px] md:text-xs text-charcoal/70 font-bold uppercase tracking-widest mt-1">Design your time | by yeatz2025 powered by Gemini Ai Studio</p>
+              </div>
+            </div>
+          </div>
 
-                {/* Notification Dropdown */}
-                {isNotificationsOpen && (
-                  <div 
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute right-0 top-full mt-4 w-72 sm:w-96 bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-4 z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200"
-                  >
-                     <div className="flex justify-between items-center mb-4 px-2">
-                       <h3 className="font-bold text-charcoal">Notifications</h3>
-                       <span className="bg-peach/50 text-charcoal text-xs font-bold px-2 py-1 rounded-full">{activeReminders.length} New</span>
-                     </div>
-                     
-                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                       {activeReminders.length === 0 ? (
-                         <div className="text-center py-8 text-gray-500">
-                           <p className="text-sm">No new notifications</p>
-                         </div>
-                       ) : (
-                         activeReminders.map(event => (
-                           <div key={event.id} className="bg-white/50 p-3 rounded-2xl flex items-start gap-3 border border-white/30 hover:bg-white/80 transition-colors">
-                             <div className="mt-1 w-2 h-2 rounded-full bg-terra shrink-0"></div>
-                             <div className="flex-1">
-                               <p className="text-sm font-bold text-charcoal">{event.title}</p>
-                               <p className="text-xs text-gray-500 mb-2">Reminder: {event.reminderSetting}</p>
-                               <button 
-                                 onClick={() => handleDismissReminder(event)}
-                                 className="text-xs bg-terra/10 text-terra px-2 py-1 rounded-lg font-bold hover:bg-terra hover:text-white transition-colors flex items-center gap-1 w-fit"
-                               >
-                                 <Check size={12}/> Mark Read
-                               </button>
-                             </div>
-                           </div>
-                         ))
-                       )}
-                     </div>
-                     <div className="mt-4 pt-3 border-t border-gray-200/50 text-center">
-                       <button onClick={() => { setActiveTab('reminders'); setIsNotificationsOpen(false); }} className="text-xs font-bold text-charcoal/60 hover:text-charcoal transition-colors">
-                         View All Reminders
-                       </button>
-                     </div>
-                  </div>
+          <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto justify-end">
+            <div className="relative">
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsNotificationsOpen(!isNotificationsOpen); }}
+                className={`p-3 md:p-4 rounded-2xl backdrop-blur-md text-charcoal hover:scale-105 transition-transform shadow-sm border border-white/40 hover:bg-white/60 relative ${isNotificationsOpen ? 'bg-white/60' : 'bg-white/40'}`}
+              >
+                <Bell size={20} className="md:w-6 md:h-6" />
+                {activeReminders.length > 0 && (
+                  <span className="absolute top-3 right-3 w-2 h-2 md:w-3 md:h-3 bg-terra rounded-full border-2 border-white animate-pulse"></span>
                 )}
-             </div>
+              </button>
 
-             {activeTab !== 'vault' && (
-                <button 
-                  onClick={handleAddClick}
-                  className="bg-charcoal/90 backdrop-blur-md text-bone px-4 md:px-8 py-3 md:py-4 rounded-2xl flex items-center gap-2 md:gap-3 text-sm md:text-base font-bold hover:bg-charcoal shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all border border-white/10"
+              {/* Notification Dropdown */}
+              {isNotificationsOpen && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute right-0 top-full mt-4 w-72 sm:w-96 bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-4 z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200"
                 >
-                  <Plus size={20} className="md:w-6 md:h-6" />
-                  <span>New Event</span>
-                </button>
-             )}
-           </div>
+                  <div className="flex justify-between items-center mb-4 px-2">
+                    <h3 className="font-bold text-charcoal">Notifications</h3>
+                    <span className="bg-peach/50 text-charcoal text-xs font-bold px-2 py-1 rounded-full">{activeReminders.length} New</span>
+                  </div>
+
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {activeReminders.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <p className="text-sm">No new notifications</p>
+                      </div>
+                    ) : (
+                      activeReminders.map(item => (
+                        <div key={item.id} className="bg-white/50 p-3 rounded-2xl flex items-start gap-3 border border-white/30 hover:bg-white/80 transition-colors">
+                          <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${item.isNote ? 'bg-peach' : 'bg-terra'}`}></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-charcoal">{item.title} <span className="text-[10px] opacity-50 uppercase ml-1 border border-charcoal/20 px-1 rounded">{item.type}</span></p>
+                            <p className="text-xs text-gray-500 mb-2">Reminder: {item.reminderText}</p>
+                            <button
+                              onClick={() => item.isNote ? handleUpdateNote({ ...(item.original as Note), isReminderDismissed: true }) : handleDismissReminder(item.original as PlanEvent)}
+                              className="text-xs bg-terra/10 text-terra px-2 py-1 rounded-lg font-bold hover:bg-terra hover:text-white transition-colors flex items-center gap-1 w-fit"
+                            >
+                              <Check size={12} /> Mark Read
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-gray-200/50 text-center">
+                    <button onClick={() => { setActiveTab('reminders'); setIsNotificationsOpen(false); }} className="text-xs font-bold text-charcoal/60 hover:text-charcoal transition-colors">
+                      View All Reminders
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {activeTab !== 'vault' && (
+              <button
+                onClick={handleAddClick}
+                className="bg-charcoal/90 backdrop-blur-md text-bone px-4 md:px-8 py-3 md:py-4 rounded-2xl flex items-center gap-2 md:gap-3 text-sm md:text-base font-bold hover:bg-charcoal shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all border border-white/10"
+              >
+                <Plus size={20} className="md:w-6 md:h-6" />
+                <span>New Event</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Tab Content */}
         <main>
-          
+
           {activeTab === 'dashboard' && (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 auto-rows-min">
-              
+
               {/* Card 1: AI Insight (Peach Glass) */}
               <div className="col-span-1 md:col-span-8 bg-peach/80 backdrop-blur-2xl rounded-3xl md:rounded-4xl p-5 md:p-8 shadow-lg border border-white/30 relative overflow-hidden group transition-all hover:shadow-xl hover:bg-peach/90">
                 <div className="relative z-10 h-full flex flex-col justify-between">
                   <div className="flex justify-between items-start">
-                     <div className="bg-white/30 backdrop-blur-md p-2 md:p-3 rounded-xl inline-flex border border-white/20 shadow-inner">
-                       <Sparkles className="text-charcoal" size={20}/>
-                     </div>
-                     <button 
-                       onClick={triggerAIAnalysis} 
-                       disabled={loadingAi}
-                       className="bg-charcoal/20 hover:bg-charcoal/30 backdrop-blur-md text-charcoal text-[10px] md:text-xs font-bold px-3 py-1.5 md:px-4 md:py-2 rounded-full transition-all border border-white/10"
-                     >
-                       {loadingAi ? 'Thinking...' : 'REFRESH'}
-                     </button>
+                    <div className="bg-white/30 backdrop-blur-md p-2 md:p-3 rounded-xl inline-flex border border-white/20 shadow-inner">
+                      <Sparkles className="text-charcoal" size={20} />
+                    </div>
+                    <button
+                      onClick={triggerAIAnalysis}
+                      disabled={loadingAi}
+                      className="bg-charcoal/20 hover:bg-charcoal/30 backdrop-blur-md text-charcoal text-[10px] md:text-xs font-bold px-3 py-1.5 md:px-4 md:py-2 rounded-full transition-all border border-white/10"
+                    >
+                      {loadingAi ? 'Thinking...' : 'REFRESH'}
+                    </button>
                   </div>
                   <div className="mt-4 md:mt-6">
                     <h3 className="font-bold text-lg md:text-2xl text-charcoal mb-1 md:mb-2">Daily Insight</h3>
                     <p className="text-charcoal/90 text-sm md:text-lg leading-relaxed font-medium max-w-2xl">
-                       {aiInsight || "Analyzing your schedule..."}
+                      {aiInsight || "Analyzing your schedule..."}
                     </p>
                   </div>
                 </div>
@@ -400,74 +431,81 @@ const App: React.FC = () => {
 
               {/* Card 2: Date (Frosted White) */}
               <div className="col-span-1 md:col-span-4 bg-white/40 backdrop-blur-xl rounded-3xl md:rounded-4xl p-5 md:p-8 shadow-lg flex flex-col justify-between border border-white/50 hover:border-peach/50 transition-colors group min-h-[140px] md:min-h-auto">
-                 <div className="flex justify-between items-center">
-                    <span className="text-charcoal/50 font-bold tracking-wider text-[10px] md:text-xs uppercase">Today</span>
-                    <ArrowUpRight className="text-charcoal/40 group-hover:text-peach transition-colors" />
-                 </div>
-                 <div>
-                    <div className="text-4xl md:text-5xl font-black text-charcoal mb-1">{new Date().getDate()}</div>
-                    <div className="text-sm md:text-xl text-charcoal/60 font-medium">{new Date().toLocaleDateString('en-US', { month: 'long', weekday: 'long' })}</div>
-                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-charcoal/50 font-bold tracking-wider text-[10px] md:text-xs uppercase">Today</span>
+                  <ArrowUpRight className="text-charcoal/40 group-hover:text-peach transition-colors" />
+                </div>
+                <div>
+                  <div className="text-4xl md:text-5xl font-black text-charcoal mb-1">{new Date().getDate()}</div>
+                  <div className="text-sm md:text-xl text-charcoal/60 font-medium">{new Date().toLocaleDateString('en-US', { month: 'long', weekday: 'long' })}</div>
+                </div>
               </div>
 
               {/* Card 3: Gantt Chart (Frosted White Large) */}
               <div className="col-span-1 md:col-span-12 bg-white/40 backdrop-blur-xl rounded-3xl md:rounded-4xl p-1 shadow-lg border border-white/50">
-                 <GanttChart events={events} onEventClick={handleEditClick} categories={categories} />
+                <GanttChart events={events} onEventClick={handleEditClick} categories={categories} onManageCategories={() => setIsSettingsOpen(true)} />
               </div>
 
               {/* Card 4: Upcoming (Frosted Cream) */}
               <div className="col-span-1 md:col-span-5 lg:col-span-4 bg-cream/70 backdrop-blur-xl rounded-3xl md:rounded-4xl p-5 md:p-8 shadow-lg border border-white/40">
-                 <h3 className="text-lg md:text-xl font-bold text-charcoal mb-4 md:mb-6 flex items-center gap-2">
-                   <CalendarIcon size={18} className="text-charcoal md:w-5 md:h-5"/> 
-                   <span>Upcoming</span>
-                 </h3>
-                 <div className="space-y-3 md:space-y-4">
-                     {events
-                        .filter(e => new Date(e.endDate) >= new Date())
-                        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-                        .slice(0, 3)
-                        .map(event => (
-                       <div key={event.id} onClick={() => handleEditClick(event)} className="bg-white/50 backdrop-blur-sm p-4 rounded-2xl cursor-pointer hover:bg-white/80 transition-colors flex items-center gap-4 group border border-white/30 hover:border-white/60 hover:shadow-md">
-                         <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center font-bold text-base md:text-lg shadow-sm flex-shrink-0 ${
-                           event.category === Category.WORK ? 'bg-charcoal text-white' :
-                           event.category === Category.STUDY ? 'bg-sage text-white' :
-                           event.category === Category.TRAVEL ? 'bg-peach text-charcoal' : 'bg-terra text-white'
-                         }`}>
-                           {event.title.charAt(0)}
-                         </div>
-                         <div className="min-w-0">
-                           <h4 className="font-bold text-charcoal text-sm md:text-base leading-tight group-hover:text-terra transition-colors truncate">{event.title}</h4>
-                           <p className="text-xs text-charcoal/60 font-semibold mt-1">{new Date(event.startDate).toLocaleDateString(undefined, {month:'short', day:'numeric'})}</p>
-                         </div>
-                       </div>
-                     ))}
-                     {events.length === 0 && <p className="text-charcoal/50 italic text-sm">Nothing on the horizon.</p>}
-                 </div>
+                <h3 className="text-lg md:text-xl font-bold text-charcoal mb-4 md:mb-6 flex items-center gap-2">
+                  <CalendarIcon size={18} className="text-charcoal md:w-5 md:h-5" />
+                  <span>Upcoming</span>
+                </h3>
+                <div className="space-y-3 md:space-y-4">
+                  {events
+                    .filter(e => new Date(e.endDate) >= new Date())
+                    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+                    .slice(0, 3)
+                    .map(event => (
+                      <div key={event.id} onClick={() => handleEditClick(event)} className="bg-white/50 backdrop-blur-sm p-4 rounded-2xl cursor-pointer hover:bg-white/80 transition-colors flex items-center gap-4 group border border-white/30 hover:border-white/60 hover:shadow-md">
+                        <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center font-bold text-base md:text-lg shadow-sm flex-shrink-0 ${event.category === Category.WORK ? 'bg-charcoal text-white' :
+                          event.category === Category.STUDY ? 'bg-sage text-white' :
+                            event.category === Category.TRAVEL ? 'bg-peach text-charcoal' : 'bg-terra text-white'
+                          }`}>
+                          {event.title.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-charcoal text-sm md:text-base leading-tight group-hover:text-terra transition-colors truncate">{event.title}</h4>
+                          <p className="text-xs text-charcoal/60 font-semibold mt-1">{new Date(event.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
+                        </div>
+                      </div>
+                    ))}
+                  {events.length === 0 && <p className="text-charcoal/50 italic text-sm">Nothing on the horizon.</p>}
+                </div>
               </div>
 
               {/* Card 5: Stats (Frosted Dark) */}
               <div className="col-span-1 md:col-span-7 lg:col-span-8 bg-charcoal/90 backdrop-blur-xl rounded-3xl md:rounded-4xl p-5 md:p-6 shadow-lg flex flex-col md:flex-row items-center relative overflow-hidden border border-white/10">
-                 <div className="relative z-10 flex-1 w-full">
-                    <h3 className="text-lg md:text-xl font-bold text-bone mb-2 ml-2 md:ml-4">Focus Distribution</h3>
-                    <StatsChart events={events} variant="dark" title="Focus Distribution" />
-                 </div>
-                 {/* Glass reflection on dark card */}
-                 <div className="absolute right-0 bottom-0 w-full h-full bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
+                <div className="relative z-10 flex-1 w-full">
+                  <h3 className="text-lg md:text-xl font-bold text-bone mb-2 ml-2 md:ml-4">Focus Distribution</h3>
+                  <StatsChart events={events} variant="dark" title="Focus Distribution" />
+                </div>
+                {/* Glass reflection on dark card */}
+                <div className="absolute right-0 bottom-0 w-full h-full bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
               </div>
 
             </div>
           )}
 
-          {activeTab === 'journal' && <Journal events={events} />}
-          
+          {activeTab === 'notes' &&
+            <Notes
+              notes={notes}
+              categories={categories}
+              onAddNote={handleAddNote}
+              onUpdateNote={handleUpdateNote}
+              onDeleteNote={handleDeleteNote}
+            />
+          }
+
           {activeTab === 'stats' && (
-             <AnalyticsDashboard events={events} setActiveTab={setActiveTab} />
+            <AnalyticsDashboard events={events} setActiveTab={setActiveTab} />
           )}
-          
+
           {activeTab === 'reminders' && (
-            <RemindersView 
-              events={events} 
-              onDismiss={handleDismissReminder} 
+            <RemindersView
+              events={events}
+              onDismiss={handleDismissReminder}
               onEdit={handleEditClick}
             />
           )}
@@ -492,18 +530,17 @@ const App: React.FC = () => {
             { id: 'dashboard', icon: CalendarIcon, label: 'Timeline' },
             { id: 'reminders', icon: Bell, label: 'Reminders' },
             { id: 'vault', icon: Lock, label: 'Vault' },
-            { id: 'journal', icon: Feather, label: 'Journal' },
+            { id: 'notes', icon: Book, label: 'Notes' },
             { id: 'aichat', icon: Sparkles, label: 'AI Chat' },
             { id: 'stats', icon: BarChart2, label: 'Stats' },
           ].map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center p-2 rounded-xl transition-colors ${
-                activeTab === item.id
-                  ? 'text-charcoal bg-white/50'
-                  : 'text-charcoal/60 hover:text-charcoal hover:bg-white/20'
-              }`}
+              className={`flex flex-col items-center p-2 rounded-xl transition-colors ${activeTab === item.id
+                ? 'text-charcoal bg-white/50'
+                : 'text-charcoal/60 hover:text-charcoal hover:bg-white/20'
+                }`}
               title={item.label}
             >
               <item.icon size={20} />
