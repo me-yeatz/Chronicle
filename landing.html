@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronicle | Design your time. Write your story.</title>
+    <meta name="description" content="A minimalist personal planning and journaling app powered by Gemini AI. Design your time. Write your story.">
+    <meta name="theme-color" content="#32292F">
+
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Chronicle">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="/assets/icon-192.png">
+    <link rel="apple-touch-icon" href="/assets/icon-192.png">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Chronicle | Design your time. Write your story.">
+    <meta property="og:description" content="A minimalist personal planning and journaling app powered by Gemini AI.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/assets/Screenshot_Desktop.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bone: #F3EFE0;
+            --charcoal: #32292F;
+            --charcoal-light: #4A3D46;
+            --sage: #8A9A5B;
+            --terra: #BC4B51;
+            --sand: #D4C5C0;
+            --peach: #FFAB91;
+            --cream: #FFF5D1;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bone);
+            color: var(--charcoal);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Ambient Background Blobs */
+        .ambient-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            animation: float 20s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        .blob-1 {
+            width: 40vw;
+            height: 40vw;
+            top: -10%;
+            left: -10%;
+            background: rgba(255, 171, 145, 0.3);
+        }
+
+        .blob-2 {
+            width: 35vw;
+            height: 35vw;
+            bottom: -5%;
+            right: -5%;
+            background: rgba(138, 154, 91, 0.2);
+            animation-delay: 2s;
+        }
+
+        .blob-3 {
+            width: 25vw;
+            height: 25vw;
+            top: 50%;
+            left: 50%;
+            background: rgba(255, 245, 209, 0.6);
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        /* Glass Panel */
+        .glass {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+        }
+
+        .glass-light {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 16px 32px;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-logo {
+            width: 40px;
+            height: 40px;
+            background: var(--charcoal);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-logo svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--peach);
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .nav-title {
+            font-family: 'Cinzel', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--charcoal);
+            letter-spacing: 1px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--charcoal);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .nav-link:hover {
+            opacity: 1;
+        }
+
+        .nav-cta {
+            background: var(--charcoal);
+            color: var(--bone);
+            border: none;
+            padding: 12px 24px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .nav-cta:hover {
+            background: var(--charcoal-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(50, 41, 47, 0.2);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 32px 80px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            margin-bottom: 24px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--charcoal);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .hero-badge svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--peach);
+            fill: none;
+        }
+
+        .hero-title {
+            font-family: 'Cinzel', serif;
+            font-size: 72px;
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--charcoal);
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+
+        .hero-tagline {
+            font-family: 'Cinzel', serif;
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--charcoal-light);
+            margin-bottom: 24px;
+            letter-spacing: 2px;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--charcoal);
+            opacity: 0.7;
+            line-height: 1.8;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 60px;
+        }
+
+        .btn-primary {
+            background: var(--charcoal);
+            color: var(--bone);
+            border: none;
+            padding: 16px 32px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 14px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(50, 41, 47, 0.15);
+        }
+
+        .btn-primary:hover {
+            background: var(--charcoal-light);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(50, 41, 47, 0.25);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.6);
+            color: var(--charcoal);
+            border: 1px solid rgba(50, 41, 47, 0.2);
+            padding: 16px 32px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 14px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(50, 41, 47, 0.1);
+        }
+
+        .hero-screenshot {
+            width: 100%;
+            max-width: 900px;
+            border-radius: 20px;
+            box-shadow: 0 40px 100px rgba(50, 41, 47, 0.2);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--charcoal);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--charcoal);
+            letter-spacing: -1px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            padding: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(50, 41, 47, 0.1);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--charcoal);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon svg {
+            width: 28px;
+            height: 28px;
+            stroke: var(--peach);
+            fill: none;
+            stroke-width: 1.5;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--charcoal);
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: var(--charcoal);
+            opacity: 0.7;
+            line-height: 1.7;
+        }
+
+        /* Showcase Section */
+        .showcase {
+            padding: 100px 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .showcase-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+            margin-top: 48px;
+        }
+
+        .showcase-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .showcase-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            font-size: 16px;
+            color: var(--charcoal);
+        }
+
+        .showcase-check {
+            width: 28px;
+            height: 28px;
+            background: var(--sage);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .showcase-check svg {
+            width: 16px;
+            height: 16px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2.5;
+        }
+
+        .showcase-image {
+            padding: 24px;
+        }
+
+        .showcase-image img {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(50, 41, 47, 0.15);
+        }
+
+        /* Platforms Section */
+        .platforms {
+            padding: 100px 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        .platform-card {
+            padding: 40px 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .platform-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(50, 41, 47, 0.1);
+        }
+
+        .platform-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .platform-icon svg {
+            width: 40px;
+            height: 40px;
+            stroke: var(--charcoal);
+            fill: none;
+            stroke-width: 1.5;
+        }
+
+        .platform-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--charcoal);
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 100px 32px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 64px;
+        }
+
+        .cta-title {
+            font-family: 'Cinzel', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: 16px;
+        }
+
+        .cta-subtitle {
+            font-size: 18px;
+            color: var(--charcoal);
+            opacity: 0.7;
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 32px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-text {
+            color: var(--charcoal);
+            font-size: 14px;
+            opacity: 0.6;
+        }
+
+        .footer-text a {
+            color: var(--charcoal);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-text a:hover {
+            opacity: 1;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .mobile-menu-btn svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--charcoal);
+            fill: none;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--sand);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--charcoal);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .platforms-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                padding: 12px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .nav-links.mobile-open {
+                display: flex;
+                flex-direction: column;
+                position: fixed;
+                top: 80px;
+                left: 20px;
+                right: 20px;
+                padding: 24px;
+                gap: 20px;
+            }
+
+            .hero {
+                padding: 100px 20px 60px;
+            }
+
+            .hero-title {
+                font-size: 42px;
+            }
+
+            .hero-tagline {
+                font-size: 18px;
+            }
+
+            .hero-subtitle {
+                font-size: 16px;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                width: 100%;
+                max-width: 300px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .btn-primary, .btn-secondary {
+                text-align: center;
+                width: 100%;
+            }
+
+            .features {
+                padding: 60px 20px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 32px;
+            }
+
+            .showcase {
+                padding: 60px 20px;
+            }
+
+            .showcase-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .platforms {
+                padding: 60px 20px;
+            }
+
+            .platforms-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }
+
+            .cta {
+                padding: 60px 20px;
+            }
+
+            .cta-container {
+                padding: 40px 24px;
+            }
+
+            .cta-title {
+                font-size: 32px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                max-width: 300px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 36px;
+            }
+
+            .platforms-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Ambient Background Blobs -->
+    <div class="ambient-blob blob-1"></div>
+    <div class="ambient-blob blob-2"></div>
+    <div class="ambient-blob blob-3"></div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container glass">
+            <div class="nav-brand">
+                <div class="nav-logo">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="nav-title">Chronicle</span>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#showcase" class="nav-link">Why Chronicle</a>
+                <a href="#platforms" class="nav-link">Platforms</a>
+                <a href="/app" class="nav-cta">Open App</a>
+            </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+                <svg viewBox="0 0 24 24" stroke-width="1.5">
+                    <path d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-badge glass-light">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Powered by Gemini AI
+            </div>
+            <h1 class="hero-title">Chronicle</h1>
+            <p class="hero-tagline">Design your time. Write your story.</p>
+            <p class="hero-subtitle">A minimalist personal planning and journaling app with AI-powered insights. Beautiful timeline views, smart reminders, and a private password vault.</p>
+            <div class="hero-buttons">
+                <a href="/app" class="btn-primary">Open Chronicle</a>
+                <a href="https://github.com/me-yeatz/Chronicle" target="_blank" class="btn-secondary">View on GitHub</a>
+            </div>
+            <img src="/assets/Screenshot_Desktop.png" alt="Chronicle App Screenshot" class="hero-screenshot">
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-badge glass-light">Features</span>
+                <h2 class="section-title">Everything you need</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card glass">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <h3 class="feature-title">Interactive Timeline</h3>
+                    <p class="feature-desc">Beautiful Gantt chart view with zoom, pan, and drag controls. See your schedule at a glance.</p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <h3 class="feature-title">AI Analysis</h3>
+                    <p class="feature-desc">Get intelligent insights about your daily schedule powered by Google Gemini AI.</p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    </div>
+                    <h3 class="feature-title">Journal Entries</h3>
+                    <p class="feature-desc">Write daily reflections with AI-generated prompts. Masonry layout for beautiful presentation.</p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    </div>
+                    <h3 class="feature-title">Smart Reminders</h3>
+                    <p class="feature-desc">Set reminders for same-day, 1-day, 3-days, or 1-week before your events.</p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <h3 class="feature-title">Password Vault</h3>
+                    <p class="feature-desc">Securely store your credentials locally. Private and encrypted on your device.</p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    </div>
+                    <h3 class="feature-title">Analytics Dashboard</h3>
+                    <p class="feature-desc">Visualize your activity breakdown by category. Understand how you spend your time.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Showcase Section -->
+    <section class="showcase" id="showcase">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-badge glass-light">Why Chronicle</span>
+                <h2 class="section-title">Designed for clarity</h2>
+            </div>
+            <div class="showcase-content">
+                <div class="showcase-text">
+                    <ul class="showcase-list">
+                        <li>
+                            <span class="showcase-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+                            <span>Minimalist glass morphism design</span>
+                        </li>
+                        <li>
+                            <span class="showcase-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+                            <span>AI-powered schedule analysis</span>
+                        </li>
+                        <li>
+                            <span class="showcase-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+                            <span>Works offline as a Progressive Web App</span>
+                        </li>
+                        <li>
+                            <span class="showcase-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+                            <span>All data stored locally on your device</span>
+                        </li>
+                        <li>
+                            <span class="showcase-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+                            <span>Desktop app available for Windows</span>
+                        </li>
+                        <li>
+                            <span class="showcase-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+                            <span>Open source and free forever</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="showcase-image glass-light">
+                    <img src="/assets/Screenshot_Desktop.png" alt="Chronicle Features">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Platforms Section -->
+    <section class="platforms" id="platforms">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-badge glass-light">Platforms</span>
+                <h2 class="section-title">Use anywhere</h2>
+            </div>
+            <div class="platforms-grid">
+                <div class="platform-card glass">
+                    <div class="platform-icon">
+                        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    </div>
+                    <h3 class="platform-name">Web</h3>
+                </div>
+                <div class="platform-card glass">
+                    <div class="platform-icon">
+                        <svg viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                    </div>
+                    <h3 class="platform-name">PWA</h3>
+                </div>
+                <div class="platform-card glass">
+                    <div class="platform-icon">
+                        <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                    </div>
+                    <h3 class="platform-name">Mobile</h3>
+                </div>
+                <div class="platform-card glass">
+                    <div class="platform-icon">
+                        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    </div>
+                    <h3 class="platform-name">Desktop</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="cta-container glass">
+            <h2 class="cta-title">Start writing your story</h2>
+            <p class="cta-subtitle">Design your time with clarity and purpose. No sign-up required.</p>
+            <div class="cta-buttons">
+                <a href="/app" class="btn-primary">Open Chronicle</a>
+                <a href="https://github.com/me-yeatz/Chronicle" target="_blank" class="btn-secondary">View Source</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="footer-text">Chronicle by <a href="https://github.com/me-yeatz" target="_blank">@me-yeatz</a> | <a href="https://github.com/me-yeatz/Chronicle" target="_blank">Open Source</a></p>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const navLinks = document.getElementById('navLinks');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('mobile-open');
+        });
+
+        // Close mobile menu when clicking a link
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('mobile-open');
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

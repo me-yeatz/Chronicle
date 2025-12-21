@@ -67,8 +67,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onSett
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group relative overflow-hidden ${activeTab === item.id
-                  ? 'bg-charcoal text-bone shadow-lg scale-[1.02]'
-                  : 'text-gray-600 hover:bg-white/40 hover:text-charcoal'
+                ? 'bg-charcoal text-bone shadow-lg scale-[1.02]'
+                : 'text-gray-600 hover:bg-white/40 hover:text-charcoal'
                 }`}
             >
               {/* Glass shine effect on hover for non-active items */}
