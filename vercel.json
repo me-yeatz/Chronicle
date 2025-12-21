@@ -1,24 +1,31 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "./dist",
-  "rewrites": [
-    { "source": "/", "destination": "/landing.html" },
-    { "source": "/app", "destination": "/index.html" },
-    { "source": "/app/:path*", "destination": "/index.html" }
-  ],
-  "headers": [
+  "routes": [
     {
-      "source": "/sw.js",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
-      ]
+      "src": "^/$",
+      "dest": "/landing.html"
     },
     {
-      "source": "/manifest.webmanifest",
-      "headers": [
-        { "key": "Content-Type", "value": "application/manifest+json" }
-      ]
+      "src": "^/app(/.*)?$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/sw.js",
+      "headers": {
+        "Cache-Control": "no-cache",
+        "Service-Worker-Allowed": "/"
+      }
+    },
+    {
+      "src": "/manifest.webmanifest",
+      "headers": {
+        "Content-Type": "application/manifest+json"
+      }
+    },
+    {
+      "src": "^/(.*)",
+      "dest": "/$1"
     }
   ]
 }
