@@ -12,7 +12,7 @@ import AIChat from './components/AIChat';
 import StorageNotification, { StorageWarningBanner } from './components/StorageNotification';
 import { PlanEvent, UserProfile, CategoryItem, Credential, DEFAULT_CATEGORIES, Category, Note } from './types';
 import { Plus, Bell, Sparkles, Calendar as CalendarIcon, ArrowUpRight, Check, Feather, ChevronLeft, Lock, BarChart2, Book } from 'lucide-react';
-import { analyzeSchedule } from './services/geminiService';
+import { analyzeSchedule, generateJournalReflection } from './services/aiService';
 import {
   loadFromStorage,
   saveToStorage,
@@ -22,6 +22,7 @@ import {
   clearAllChronicleData,
   STORAGE_KEYS
 } from './services/storageService';
+import './styles/orientation.css';
 
 const DEFAULT_USER: UserProfile = {
   name: "Your Name",
@@ -274,7 +275,7 @@ const App: React.FC = () => {
   }, [events, notes]);
 
   return (
-    <div className="min-h-screen bg-transparent font-sans flex" onClick={() => isNotificationsOpen && setIsNotificationsOpen(false)}>
+    <div className="min-h-screen bg-transparent font-sans flex orientation-aware" onClick={() => isNotificationsOpen && setIsNotificationsOpen(false)}>
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}

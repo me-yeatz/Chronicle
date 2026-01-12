@@ -60,6 +60,12 @@ export interface UserProfile {
   role: string;
   avatarUrl: string;
   aiApiKey?: string;
+  aiProvider?: 'gemini' | 'openai' | 'huggingface' | 'deepseek' | 'ollama';
+  geminiApiKey?: string;
+  openaiApiKey?: string;
+  huggingfaceApiKey?: string;
+  deepseekApiKey?: string;
+  ollamaApiKey?: string;
 }
 
 export interface Note {

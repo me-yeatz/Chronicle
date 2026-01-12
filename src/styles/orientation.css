@@ -1,0 +1,105 @@
+/* Orientation-specific styles for Chronicle app */
+
+/* Landscape orientation adjustments */
+@media screen and (orientation: landscape) {
+  /* Adjust sidebar positioning for landscape */
+  .sidebar-landscape {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: auto;
+  }
+
+  /* Adjust main content for landscape */
+  .main-content-landscape {
+    margin-left: 7rem; /* Adjust based on sidebar width */
+  }
+
+  /* Adjust grid layout for landscape */
+  .dashboard-grid-landscape {
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1rem;
+  }
+
+  /* Adjust cards for landscape */
+  .card-landscape {
+    min-height: 120px;
+  }
+
+  /* Adjust bottom navigation for landscape */
+  .bottom-nav-landscape {
+    display: none;
+  }
+}
+
+/* Portrait orientation adjustments */
+@media screen and (orientation: portrait) {
+  /* Adjust for mobile portrait view */
+  .sidebar-portrait {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    width: 100%;
+    z-index: 50;
+  }
+
+  /* Hide sidebar elements in portrait for mobile */
+  .sidebar-elements-portrait {
+    display: none;
+  }
+
+  /* Show bottom navigation in portrait */
+  .bottom-nav-portrait {
+    display: block;
+  }
+
+  /* Adjust main content for portrait */
+  .main-content-portrait {
+    margin-left: 0;
+    padding-bottom: 5rem; /* Space for bottom nav */
+  }
+}
+
+/* Responsive adjustments for different screen sizes */
+@media (max-width: 768px) {
+  .responsive-sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 70%;
+    height: 100vh;
+    z-index: 40;
+    transition: left 0.3s ease;
+  }
+
+  .responsive-sidebar.active {
+    left: 0;
+  }
+
+  .responsive-main-content {
+    margin-left: 0;
+  }
+}
+
+/* General responsive adjustments */
+@media screen and (max-width: 1024px) {
+  .layout-container {
+    flex-direction: column;
+  }
+  
+  .sidebar-responsive {
+    width: 100%;
+    height: auto;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+  
+  .main-content-responsive {
+    width: 100%;
+    margin-left: 0;
+  }
+}

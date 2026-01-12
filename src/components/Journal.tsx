@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PlanEvent, Category } from '../types';
-import { generateJournalReflection } from '../services/geminiService';
+import { generateJournalReflection } from '../services/aiService';
 import { PenTool, Sparkles, Quote } from 'lucide-react';
 
 interface JournalProps {

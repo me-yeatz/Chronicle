@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Camera, User, Briefcase, Trash2, Plus, Pencil, Tag, Key, HardDrive, Download, Upload } from 'lucide-react';
+import { X, Save, Camera, User, Briefcase, Trash2, Plus, Pencil, Tag, Key, HardDrive, Download, Upload, Settings } from 'lucide-react';
 import { UserProfile, CategoryItem, CATEGORY_COLORS } from '../types';
 import { getStorageInfo, getChronicleStorageInfo, exportAllData, importData } from '../services/storageService';
+import { AIProvider, getAvailableProviders } from '../services/aiService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [chronicleStorage, setChronicleStorage] = useState(getChronicleStorageInfo());
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>(user.aiProvider || 'gemini');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,6 +49,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       setChronicleStorage(getChronicleStorageInfo());
       setImportError(null);
       setImportSuccess(false);
+      setSelectedProvider(user.aiProvider || 'gemini');
     }
   }, [isOpen, user, categories]);
 
@@ -55,7 +58,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.name.trim()) {
-      onSave(formData);
+      // Update the form data with the selected provider
+      const updatedFormData = {
+        ...formData,
+        aiProvider: selectedProvider
+      };
+      onSave(updatedFormData);
       onSaveCategories(localCategories);
       onClose();
     }
@@ -377,14 +385,86 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <Key size={16} className="text-charcoal/50" />
                 <label className="text-xs font-bold uppercase tracking-wider text-charcoal/50">AI Settings</label>
               </div>
-              <input
-                type="password"
-                value={formData.aiApiKey || ''}
-                onChange={e => setFormData({ ...formData, aiApiKey: e.target.value })}
-                className="w-full bg-white/60 p-4 rounded-xl text-sm font-medium text-charcoal outline-none focus:ring-4 focus:ring-peach/30"
-                placeholder="Enter Gemini API Key"
-              />
-              <p className="text-[10px] text-charcoal/40 mt-2">Stored locally only. Not shared or synced.</p>
+
+              {/* Provider Selection */}
+              <div className="mb-4">
+                <label className="text-xs font-medium text-charcoal/70 mb-1 block">AI Provider</label>
+                <select
+                  value={selectedProvider}
+                  onChange={(e) => setSelectedProvider(e.target.value as AIProvider)}
+                  className="w-full bg-white/60 p-3 rounded-xl text-sm font-medium text-charcoal outline-none focus:ring-4 focus:ring-peach/30"
+                >
+                  {getAvailableProviders().map(provider => (
+                    <option key={provider} value={provider}>
+                      {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Provider-specific API Key Input */}
+              <div>
+                <label className="text-xs font-medium text-charcoal/70 mb-1 block">
+                  {selectedProvider.charAt(0).toUpperCase() + selectedProvider.slice(1)} API Key
+                </label>
+                <input
+                  type="password"
+                  value={
+                    selectedProvider === 'gemini' ? (formData.geminiApiKey || '') :
+                    selectedProvider === 'openai' ? (formData.openaiApiKey || '') :
+                    selectedProvider === 'huggingface' ? (formData.huggingfaceApiKey || '') :
+                    selectedProvider === 'deepseek' ? (formData.deepseekApiKey || '') :
+                    selectedProvider === 'ollama' ? (formData.ollamaApiKey || '') :
+                    (formData.aiApiKey || '')
+                  }
+                  onChange={e => {
+                    const updatedFormData = { ...formData };
+                    switch(selectedProvider) {
+                      case 'gemini':
+                        updatedFormData.geminiApiKey = e.target.value;
+                        break;
+                      case 'openai':
+                        updatedFormData.openaiApiKey = e.target.value;
+                        break;
+                      case 'huggingface':
+                        updatedFormData.huggingfaceApiKey = e.target.value;
+                        break;
+                      case 'deepseek':
+                        updatedFormData.deepseekApiKey = e.target.value;
+                        break;
+                      case 'ollama':
+                        updatedFormData.ollamaApiKey = e.target.value;
+                        break;
+                      default:
+                        updatedFormData.aiApiKey = e.target.value;
+                        break;
+                    }
+                    setFormData(updatedFormData);
+                  }}
+                  className="w-full bg-white/60 p-4 rounded-xl text-sm font-medium text-charcoal outline-none focus:ring-4 focus:ring-peach/30"
+                  placeholder={`Enter ${selectedProvider} API Key`}
+                />
+                <p className="text-[10px] text-charcoal/40 mt-2">Stored locally only. Not shared or synced.</p>
+              </div>
+
+              {/* Provider Information */}
+              <div className="mt-3 text-xs text-charcoal/60">
+                {selectedProvider === 'gemini' && (
+                  <p>Get your Gemini API key from <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-terra hover:underline">Google AI Studio</a></p>
+                )}
+                {selectedProvider === 'openai' && (
+                  <p>Get your OpenAI API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-terra hover:underline">OpenAI Platform</a></p>
+                )}
+                {selectedProvider === 'huggingface' && (
+                  <p>Get your Hugging Face token from <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-terra hover:underline">Hugging Face Settings</a></p>
+                )}
+                {selectedProvider === 'deepseek' && (
+                  <p>Get your DeepSeek API key from <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer" className="text-terra hover:underline">DeepSeek Platform</a></p>
+                )}
+                {selectedProvider === 'ollama' && (
+                  <p>Make sure Ollama is running locally. No API key required.</p>
+                )}
+              </div>
             </div>
 
             {/* Storage Section */}

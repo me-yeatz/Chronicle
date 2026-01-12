@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { PlanEvent, Category } from '../types';
-import { analyzeSchedule } from '../services/geminiService';
+import { analyzeSchedule } from '../services/aiService';
 import { Loader2, MessageSquare, Sparkles, TrendingUp, Calendar, Clock, AlertTriangle } from 'lucide-react';
 
 interface AnalyticsDashboardProps {

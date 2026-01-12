@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { callAIProvider, AIConfig } from '../services/aiService';
 
 interface Message {
   id: string;
@@ -46,32 +46,53 @@ const AIChat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const getLocalApiKey = () => {
-        try {
-          const raw = localStorage.getItem('chronicle_user_profile');
-          if (!raw) return undefined;
+      // Get user's selected provider from localStorage
+      let selectedProvider: 'gemini' | 'openai' | 'huggingface' | 'deepseek' | 'ollama' = 'gemini';
+      let apiKey: string | undefined;
+
+      try {
+        const raw = localStorage.getItem('chronicle_user_profile');
+        if (raw) {
           const parsed = JSON.parse(raw);
-          return parsed?.aiApiKey || undefined;
-        } catch {
-          return undefined;
+          selectedProvider = parsed?.aiProvider || 'gemini';
+
+          // Get provider-specific API key
+          switch(selectedProvider) {
+            case 'gemini':
+              apiKey = parsed?.geminiApiKey || parsed?.aiApiKey;
+              break;
+            case 'openai':
+              apiKey = parsed?.openaiApiKey || parsed?.aiApiKey;
+              break;
+            case 'huggingface':
+              apiKey = parsed?.huggingfaceApiKey || parsed?.aiApiKey;
+              break;
+            case 'deepseek':
+              apiKey = parsed?.deepseekApiKey || parsed?.aiApiKey;
+              break;
+            case 'ollama':
+              apiKey = parsed?.ollamaApiKey || parsed?.aiApiKey;
+              break;
+            default:
+              apiKey = parsed?.aiApiKey;
+              break;
+          }
         }
-      };
-      const apiKey =
-        getLocalApiKey() ||
-        (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GEMINI_API_KEY) ||
-        (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_KEY) ||
-        (typeof process !== 'undefined' ? process.env?.API_KEY : undefined);
-      if (!apiKey) {
+      } catch {
+        // If parsing fails, use default values
+        selectedProvider = 'gemini';
+      }
+
+      if (!apiKey && selectedProvider !== 'ollama') {
         const assistantMessage: Message = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: 'AI is not configured. Add VITE_GEMINI_API_KEY to .env.local and reload.',
+          content: `AI is not configured. Please add your ${selectedProvider} API key in settings.`,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, assistantMessage]);
         return;
       }
-      const ai = new GoogleGenAI({ apiKey });
 
       const recentMessages = messages.slice(-6);
       let conversationHistory = '';
@@ -84,10 +105,13 @@ const AIChat: React.FC = () => {
 
       const fullPrompt = systemPrompt + '\n\nPrevious conversation:\n' + conversationHistory + '\nUser: ' + userInput;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: fullPrompt,
-      });
+      const config: AIConfig = {
+        provider: selectedProvider,
+        model: 'default', // Will use provider's default model
+        apiKey: apiKey
+      };
+
+      const response = await callAIProvider(fullPrompt, config);
 
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
@@ -201,7 +225,7 @@ const AIChat: React.FC = () => {
             </button>
           </div>
           <p className="text-xs text-charcoal/40 mt-2 text-center">
-            Powered by Gemini AI
+            Powered by Multi-Provider AI
           </p>
         </div>
       </div>
