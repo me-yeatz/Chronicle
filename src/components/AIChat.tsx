@@ -148,15 +148,13 @@ const AIChat: React.FC = () => {
 
   return (
     <div className="w-full h-[calc(100vh-200px)] flex flex-col">
-      <div className="bg-charcoal/90 backdrop-blur-xl rounded-3xl p-6 mb-6 text-bone">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-peach/20 rounded-2xl">
-            <Bot size={28} className="text-peach" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-black">Chronicle AI</h2>
-            <p className="text-bone/60 text-sm font-medium">Your personal planning assistant</p>
-          </div>
+      <div className="bg-charcoal/90 backdrop-blur-xl rounded-3xl p-6 md:p-10 mb-6 text-bone flex items-center gap-6">
+        <div className="hidden sm:flex w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl items-center justify-center border border-white/10 shadow-inner shrink-0 scale-110">
+            <MessageSquare size={28} className="text-peach" />
+        </div>
+        <div>
+            <h2 className="text-2xl md:text-3xl font-black">Chronicle AI</h2>
+            <p className="text-bone/60 text-sm md:text-base font-medium tracking-tight">Your personal planning assistant</p>
         </div>
       </div>
 

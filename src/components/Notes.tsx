@@ -84,10 +84,15 @@ const Notes: React.FC<NotesProps> = ({ notes, categories, onAddNote, onUpdateNot
 
     return (
         <div className="w-full h-full">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h2 className="text-3xl font-black text-charcoal">Notes</h2>
-                    <p className="text-charcoal/60 font-medium">Capture ideas, lists, and reminders.</p>
+            <div className="flex justify-between items-start mb-8 gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="hidden sm:flex w-12 h-12 md:w-14 md:h-14 bg-white/40 backdrop-blur-xl rounded-2xl items-center justify-center shadow-inner border border-white/40 shrink-0">
+                        <Book size={24} className="text-charcoal/70" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl md:text-3xl font-black text-charcoal">Notes</h2>
+                        <p className="text-xs md:text-sm text-charcoal/60 font-medium tracking-tight">Capture ideas, lists, and reminders.</p>
+                    </div>
                 </div>
                 <button
                     onClick={() => setIsAdding(true)}

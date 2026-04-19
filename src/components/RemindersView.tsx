@@ -43,10 +43,13 @@ const RemindersView: React.FC<RemindersViewProps> = ({ events, onDismiss, onEdit
     <div className="w-full space-y-6 md:space-y-10 pb-20">
       
       {/* Header */}
-      <div className="bg-peach/80 backdrop-blur-2xl rounded-3xl md:rounded-4xl p-6 md:p-10 shadow-lg border border-white/30 relative overflow-hidden">
+      <div className="bg-peach/80 backdrop-blur-2xl rounded-3xl md:rounded-4xl p-6 md:p-10 shadow-lg border border-white/30 relative overflow-hidden flex items-center gap-6">
+        <div className="hidden sm:flex w-16 h-16 bg-white/30 backdrop-blur-md rounded-2xl items-center justify-center border border-white/40 shadow-inner shrink-0 scale-110">
+            <Bell size={28} className="text-charcoal" />
+        </div>
         <div className="relative z-10">
            <h2 className="text-2xl md:text-3xl font-black text-charcoal mb-2">Reminders</h2>
-           <p className="text-sm md:text-base text-charcoal/80 font-medium">Never miss a beat. Track your upcoming alerts here.</p>
+           <p className="text-sm md:text-base text-charcoal/80 font-medium tracking-tight">Never miss a beat. Track your upcoming alerts here.</p>
         </div>
         <Bell className="absolute -right-6 -bottom-6 w-32 h-32 md:w-48 md:h-48 text-white/20 rotate-12" />
       </div>

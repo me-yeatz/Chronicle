@@ -58,14 +58,14 @@ const PasswordVault: React.FC<PasswordVaultProps> = ({ credentials, onAdd, onDel
     <div className="w-full pb-20">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-        <div className="bg-white/40 backdrop-blur-md p-6 rounded-3xl border border-white/40 shadow-sm w-full md:w-auto">
-          <div className="flex items-center gap-3 mb-2">
-             <div className="p-2 bg-charcoal text-bone rounded-xl">
-               <ShieldCheck size={24} />
-             </div>
-             <h2 className="text-2xl font-black text-charcoal">Secure Vault</h2>
-          </div>
-          <p className="text-charcoal/60 font-medium text-sm">Manage your accounts and passwords securely.</p>
+        <div className="flex items-center gap-4 bg-white/40 backdrop-blur-md p-6 rounded-3xl border border-white/40 shadow-sm w-full md:w-auto">
+            <div className="hidden sm:flex w-12 h-12 md:w-14 md:h-14 bg-charcoal text-bone rounded-2xl items-center justify-center shadow-lg shrink-0">
+                <ShieldCheck size={26} />
+            </div>
+            <div>
+                <h2 className="text-2xl md:text-3xl font-black text-charcoal">Secure Vault</h2>
+                <p className="text-xs md:text-sm text-charcoal/60 font-medium tracking-tight">Manage your accounts and passwords securely.</p>
+            </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">

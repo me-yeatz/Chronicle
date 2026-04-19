@@ -61,7 +61,7 @@ const getApiKey = (provider: AIProvider): string | undefined => {
 };
 
 // Generic function to call different AI providers
-const callAIProvider = async (prompt: string, config: AIConfig): Promise<AIResponse> => {
+export const callAIProvider = async (prompt: string, config: AIConfig): Promise<AIResponse> => {
   const { provider, model = 'default' } = config;
   const apiKey = config.apiKey || getApiKey(provider);
 

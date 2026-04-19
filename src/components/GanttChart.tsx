@@ -113,7 +113,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ events, onEventClick, categorie
   }, [isDragging]);
 
   return (
-    <div className="p-6 md:p-8 select-none">
+    <div className="pt-20 pb-8 px-6 md:px-8 select-none">
       <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
         <div>
           <h3 className="text-2xl font-black text-charcoal">Timeline</h3>

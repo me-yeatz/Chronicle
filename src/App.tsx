@@ -9,10 +9,13 @@ import Notes from './components/Notes';
 import RemindersView from './components/RemindersView';
 import PasswordVault from './components/PasswordVault';
 import AIChat from './components/AIChat';
+import CalendarView from './components/CalendarView';
 import StorageNotification, { StorageWarningBanner } from './components/StorageNotification';
 import { PlanEvent, UserProfile, CategoryItem, Credential, DEFAULT_CATEGORIES, Category, Note } from './types';
-import { Plus, Bell, Sparkles, Calendar as CalendarIcon, ArrowUpRight, Check, Feather, ChevronLeft, Lock, BarChart2, Book } from 'lucide-react';
+import { Plus, Bell, Sparkles, Calendar as CalendarIcon, ArrowUpRight, Check, Feather, ChevronLeft, Lock, BarChart2, Book, MessageSquare, Info } from 'lucide-react';
 import { analyzeSchedule, generateJournalReflection } from './services/aiService';
+import { db } from './db/database';
+import { useLiveQuery } from 'dexie-react-hooks';
 import {
   loadFromStorage,
   saveToStorage,
@@ -77,21 +80,43 @@ const INITIAL_NOTES: Note[] = [];
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [events, setEvents] = useState<PlanEvent[]>(() =>
-    loadFromStorage(STORAGE_KEYS.EVENTS, INITIAL_EVENTS)
-  );
-  const [notes, setNotes] = useState<Note[]>(() =>
-    loadFromStorage(STORAGE_KEYS.NOTES, INITIAL_NOTES)
-  );
-  const [credentials, setCredentials] = useState<Credential[]>(() =>
-    loadFromStorage(STORAGE_KEYS.CREDENTIALS, INITIAL_CREDENTIALS)
-  );
-  const [userProfile, setUserProfile] = useState<UserProfile>(() =>
-    loadFromStorage(STORAGE_KEYS.USER_PROFILE, DEFAULT_USER)
-  );
-  const [categories, setCategories] = useState<CategoryItem[]>(() =>
-    loadFromStorage(STORAGE_KEYS.CATEGORIES, DEFAULT_CATEGORIES)
-  );
+  const [viewMode, setViewMode] = useState<'gantt' | 'calendar'>('calendar');
+  
+  // Use Dexie (IndexedDB) for data
+  const events = useLiveQuery(() => db.events.toArray()) || [];
+  const notes = useLiveQuery(() => db.notes.toArray()) || [];
+  const credentials = useLiveQuery(() => db.credentials.toArray()) || [];
+  
+  const rawUserProfile = useLiveQuery(() => db.userProfile.get('main'))?.data;
+  const userProfile = rawUserProfile || DEFAULT_USER;
+  
+  const rawCategories = useLiveQuery(() => db.categories.get('main'))?.data;
+  const categories = rawCategories || DEFAULT_CATEGORIES;
+
+  // Migration and initial load
+  useEffect(() => {
+    const migrate = async () => {
+      const isMigrated = localStorage.getItem('chronicle_migrated_v1');
+      if (!isMigrated) {
+        console.log('Migrating localStorage to IndexedDB...');
+        const localEvents = loadFromStorage(STORAGE_KEYS.EVENTS, INITIAL_EVENTS);
+        const localNotes = loadFromStorage(STORAGE_KEYS.NOTES, INITIAL_NOTES);
+        const localCredentials = loadFromStorage(STORAGE_KEYS.CREDENTIALS, INITIAL_CREDENTIALS);
+        const localProfile = loadFromStorage(STORAGE_KEYS.USER_PROFILE, DEFAULT_USER);
+        const localCategories = loadFromStorage(STORAGE_KEYS.CATEGORIES, DEFAULT_CATEGORIES);
+
+        await db.events.bulkPut(localEvents);
+        await db.notes.bulkPut(localNotes);
+        await db.credentials.bulkPut(localCredentials);
+        await db.userProfile.put({ id: 'main', data: localProfile });
+        await db.categories.put({ id: 'main', data: localCategories });
+
+        localStorage.setItem('chronicle_migrated_v1', 'true');
+        console.log('Migration complete.');
+      }
+    };
+    migrate();
+  }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -100,68 +125,24 @@ const App: React.FC = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-  // Storage notification state
+  // Storage notification state - simplified since DB handles most of it
   const [storageNotification, setStorageNotification] = useState<StorageResult | null>(null);
   const [showStorageWarning, setShowStorageWarning] = useState(false);
   const [storagePercentage, setStoragePercentage] = useState(0);
 
-  // Check storage status on mount and after saves
-  const checkStorageStatus = useCallback(() => {
+  // Check storage status on mount
+  useEffect(() => {
     const info = getStorageInfo();
     setStoragePercentage(info.percentage);
     setShowStorageWarning(isStorageNearFull());
   }, []);
 
-  useEffect(() => {
-    checkStorageStatus();
-  }, [checkStorageStatus]);
-
-  // Helper to save with notification
-  const saveWithNotification = useCallback(<T,>(key: string, data: T): boolean => {
-    const result = saveToStorage(key, data);
-    if (!result.success) {
-      setStorageNotification(result);
-      return false;
-    }
-    checkStorageStatus();
-    return true;
-  }, [checkStorageStatus]);
-
-  // Persist events to localStorage whenever they change
-  useEffect(() => {
-    saveWithNotification(STORAGE_KEYS.EVENTS, events);
-  }, [events, saveWithNotification]);
-
-  // Persist notes to localStorage whenever they change
-  useEffect(() => {
-    saveWithNotification(STORAGE_KEYS.NOTES, notes);
-  }, [notes, saveWithNotification]);
-
-  // Persist credentials to localStorage whenever they change
-  useEffect(() => {
-    saveWithNotification(STORAGE_KEYS.CREDENTIALS, credentials);
-  }, [credentials, saveWithNotification]);
-
-  // Persist user profile to localStorage whenever it changes
-  useEffect(() => {
-    saveWithNotification(STORAGE_KEYS.USER_PROFILE, userProfile);
-  }, [userProfile, saveWithNotification]);
-
-  // Persist categories to localStorage whenever they change
-  useEffect(() => {
-    saveWithNotification(STORAGE_KEYS.CATEGORIES, categories);
-  }, [categories, saveWithNotification]);
-
-  const handleSaveEvent = (event: PlanEvent) => {
-    if (editingEvent) {
-      setEvents(events.map(e => e.id === event.id ? event : e));
-    } else {
-      setEvents([...events, event]);
-    }
+  const handleSaveEvent = async (event: PlanEvent) => {
+    await db.events.put(event);
   };
 
-  const handleDeleteEvent = (id: string) => {
-    setEvents(events.filter(e => e.id !== id));
+  const handleDeleteEvent = async (id: string) => {
+    await db.events.delete(id);
   };
 
   const handleEditClick = (event: PlanEvent) => {
@@ -174,59 +155,54 @@ const App: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDismissReminder = (event: PlanEvent) => {
-    setEvents(events.map(e => e.id === event.id ? { ...e, isReminderDismissed: true } : e));
+  const handleDismissReminder = async (event: PlanEvent) => {
+    await db.events.update(event.id, { isReminderDismissed: true });
   };
 
   // Vault Handlers
-  const handleAddCredential = (cred: Credential) => {
-    setCredentials([...credentials, cred]);
+  const handleAddCredential = async (cred: Credential) => {
+    await db.credentials.put(cred);
   };
 
-  const handleDeleteCredential = (id: string) => {
-    setCredentials(credentials.filter(c => c.id !== id));
+  const handleDeleteCredential = async (id: string) => {
+    await db.credentials.delete(id);
   };
 
   // Notes Handlers
-  const handleAddNote = (note: Note) => {
-    setNotes([note, ...notes]);
+  const handleAddNote = async (note: Note) => {
+    await db.notes.put(note);
   };
 
-  const handleUpdateNote = (updatedNote: Note) => {
-    setNotes(notes.map(n => n.id === updatedNote.id ? updatedNote : n));
+  const handleUpdateNote = async (updatedNote: Note) => {
+    await db.notes.put(updatedNote);
   };
 
-  const handleDeleteNote = (id: string) => {
-    setNotes(notes.filter(n => n.id !== id));
+  const handleDeleteNote = async (id: string) => {
+    await db.notes.delete(id);
   };
 
   // Settings handlers
-  const handleSaveProfile = (updatedProfile: UserProfile) => {
-    setUserProfile(updatedProfile);
+  const handleSaveProfile = async (updatedProfile: UserProfile) => {
+    await db.userProfile.put({ id: 'main', data: updatedProfile });
   };
 
-  const handleClearAllData = () => {
-    // Clear all data from localStorage using the storage service
-    clearAllChronicleData();
-
-    // Reset state to defaults
-    setEvents(INITIAL_EVENTS);
-    setNotes(INITIAL_NOTES);
-    setCredentials(INITIAL_CREDENTIALS);
-    setUserProfile(DEFAULT_USER);
-    setCategories(DEFAULT_CATEGORIES);
-    setAiInsight('');
-
-    // Update storage status
-    checkStorageStatus();
+  const handleClearAllData = async () => {
+    if (confirm('This will wipe ALL your data from this device. Are you sure?')) {
+      await db.events.clear();
+      await db.notes.clear();
+      await db.credentials.clear();
+      await db.userProfile.put({ id: 'main', data: DEFAULT_USER });
+      await db.categories.put({ id: 'main', data: DEFAULT_CATEGORIES });
+      clearAllChronicleData(); // Clear localStorage too
+      setAiInsight('');
+    }
   };
 
-  const handleSaveCategories = (newCategories: CategoryItem[]) => {
-    setCategories(newCategories);
+  const handleSaveCategories = async (newCategories: CategoryItem[]) => {
+    await db.categories.put({ id: 'main', data: newCategories });
   };
 
   const handleLogout = () => {
-    // For now, just clear data and show a message
     if (confirm('Are you sure you want to log out? This will clear your session.')) {
       handleClearAllData();
     }
@@ -301,20 +277,20 @@ const App: React.FC = () => {
                   <ChevronLeft size={20} />
                 </button>
               )}
-              {/* Logo Section - Place logo.png in your public folder */}
-              <div className="w-14 h-14 md:w-16 md:h-16 bg-white/40 rounded-2xl flex items-center justify-center shadow-inner border border-white/40 shrink-0">
-                <img
-                  src="/logo.png"
-                  alt="Chronicle Logo"
-                  className="w-10 h-10 md:w-12 md:h-12 object-contain opacity-90"
-                  onError={(e) => {
-                    // Fallback if image not found
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement?.classList.add('fallback-icon');
-                  }}
-                />
-                {/* Fallback Icon if image is missing */}
-                <Feather className="hidden w-8 h-8 text-charcoal/80" style={{ display: 'none' }} />
+              {/* Logo/Context Icon Box */}
+              <div className="w-14 h-14 md:w-16 md:h-16 bg-white/60 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-sm border border-white/40 shrink-0 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-tr from-peach/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                {/* Dynamic Icon based on Active Tab */}
+                <div className="relative z-10 transition-all duration-500 transform group-hover:scale-110">
+                  {activeTab === 'dashboard' ? <Feather size={28} className="text-charcoal/80" /> :
+                   activeTab === 'notes' ? <Book size={28} className="text-charcoal/80" /> :
+                   activeTab === 'reminders' ? <Bell size={28} className="text-charcoal/80" /> :
+                   activeTab === 'vault' ? <Lock size={28} className="text-charcoal/80" /> :
+                   activeTab === 'aichat' ? <MessageSquare size={28} className="text-charcoal/80" /> :
+                   activeTab === 'stats' ? <BarChart2 size={28} className="text-charcoal/80" /> :
+                   <Info size={28} className="text-charcoal/80" />}
+                </div>
               </div>
 
               <div>
@@ -408,8 +384,8 @@ const App: React.FC = () => {
               <div className="col-span-1 md:col-span-8 bg-peach/80 backdrop-blur-2xl rounded-3xl md:rounded-4xl p-5 md:p-8 shadow-lg border border-white/30 relative overflow-hidden group transition-all hover:shadow-xl hover:bg-peach/90">
                 <div className="relative z-10 h-full flex flex-col justify-between">
                   <div className="flex justify-between items-start">
-                    <div className="bg-white/30 backdrop-blur-md p-2 md:p-3 rounded-xl inline-flex border border-white/20 shadow-inner">
-                      <Sparkles className="text-charcoal" size={20} />
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-white/40 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/40 shadow-inner shrink-0">
+                      <Sparkles className="text-charcoal" size={22} />
                     </div>
                     <button
                       onClick={triggerAIAnalysis}
@@ -442,9 +418,28 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Card 3: Gantt Chart (Frosted White Large) */}
-              <div className="col-span-1 md:col-span-12 bg-white/40 backdrop-blur-xl rounded-3xl md:rounded-4xl p-1 shadow-lg border border-white/50">
-                <GanttChart events={events} onEventClick={handleEditClick} categories={categories} onManageCategories={() => setIsSettingsOpen(true)} />
+              {/* Card 3: Timeline/Calendar (Frosted White Large) */}
+              <div className="col-span-1 md:col-span-12 bg-white/40 backdrop-blur-xl rounded-3xl md:rounded-4xl p-1 shadow-lg border border-white/50 relative group">
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex bg-white/20 p-1 rounded-xl border border-white/30 backdrop-blur-md shadow-sm">
+                   <button 
+                     onClick={() => setViewMode('gantt')} 
+                     className={`px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all ${viewMode === 'gantt' ? 'bg-charcoal text-white shadow-md' : 'text-charcoal/60 hover:bg-white/40'}`}
+                   >
+                     Timeline
+                   </button>
+                   <button 
+                     onClick={() => setViewMode('calendar')} 
+                     className={`px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all ${viewMode === 'calendar' ? 'bg-charcoal text-white shadow-md' : 'text-charcoal/60 hover:bg-white/40'}`}
+                   >
+                     Calendar
+                   </button>
+                </div>
+
+                {viewMode === 'gantt' ? (
+                  <GanttChart events={events} onEventClick={handleEditClick} categories={categories} onManageCategories={() => setIsSettingsOpen(true)} />
+                ) : (
+                  <CalendarView events={events} onEventClick={handleEditClick} categories={categories} />
+                )}
               </div>
 
               {/* Card 4: Upcoming (Frosted Cream) */}

@@ -77,6 +77,17 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ events, setActi
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-start mb-8 gap-4">
+          <div className="flex items-center gap-4">
+              <div className="hidden sm:flex w-12 h-12 md:w-14 md:h-14 bg-white/40 backdrop-blur-xl rounded-2xl items-center justify-center shadow-inner border border-white/40 shrink-0">
+                  <BarChart2 size={24} className="text-charcoal/70" />
+              </div>
+              <div>
+                  <h2 className="text-2xl md:text-3xl font-black text-charcoal">Stats & Insights</h2>
+                  <p className="text-xs md:text-sm text-charcoal/60 font-medium tracking-tight">Visualize your time and productivity habits.</p>
+              </div>
+          </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white/50 backdrop-blur-xl rounded-3xl p-6 border border-white/50">
           <div className="flex items-center gap-3">

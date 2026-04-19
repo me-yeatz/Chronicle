@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
             display: 'standalone',
             orientation: 'any',
             scope: '/',
-            start_url: '/',
+            start_url: '/app?source=pwa',
             icons: [
               {
                 src: 'assets/icon-192.png',
