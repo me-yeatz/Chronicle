@@ -10,17 +10,17 @@ interface StatsChartProps {
 }
 
 const COLORS = {
-  [Category.WORK]: '#32292F',
+  [Category.WORK]: '#322E53',
   [Category.STUDY]: '#8A9A5B',
-  [Category.TRAVEL]: '#FFAB91', // Peach
+  [Category.TRAVEL]: '#F3AB9D', // Peach / Coral
   [Category.PERSONAL]: '#BC4B51',
-  [Category.HEALTH]: '#818CF8'
+  [Category.HEALTH]: '#49426E'
 };
 
 // For dark variant, adjust colors slightly for visibility
 const DARK_COLORS = {
   ...COLORS,
-  [Category.WORK]: '#F3EFE0', // Bone for work in dark mode
+  [Category.WORK]: '#F1C28E', // Warm Gold for work in dark mode
 };
 
 const StatsChart: React.FC<StatsChartProps> = ({ events, variant = 'light', title = 'Category Distribution', className = '' }) => {
@@ -61,17 +61,17 @@ const StatsChart: React.FC<StatsChartProps> = ({ events, variant = 'light', titl
                   border: 'none',
                   boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
                   backgroundColor: '#fff',
-                  color: '#32292F',
+                  color: '#322E53',
                   padding: '12px 16px',
                   fontWeight: 'bold'
                 }}
-                itemStyle={{ color: '#32292F' }}
+                itemStyle={{ color: '#322E53' }}
               />
               <Legend
                 verticalAlign="bottom"
                 height={36}
                 iconType="circle"
-                formatter={(value) => <span style={{ color: variant === 'dark' ? '#F3EFE0' : '#32292F', fontWeight: 600, margin: '0 10px 0 5px' }}>{value}</span>}
+                formatter={(value) => <span style={{ color: variant === 'dark' ? '#F3EFE0' : '#322E53', fontWeight: 600, margin: '0 10px 0 5px' }}>{value}</span>}
               />
             </PieChart>
           </ResponsiveContainer>

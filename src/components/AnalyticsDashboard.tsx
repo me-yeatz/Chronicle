@@ -10,11 +10,11 @@ interface AnalyticsDashboardProps {
 }
 
 const COLORS = {
-  [Category.WORK]: '#32292F',
+  [Category.WORK]: '#322E53',
   [Category.STUDY]: '#8A9A5B',
-  [Category.TRAVEL]: '#FFAB91',
+  [Category.TRAVEL]: '#F3AB9D',
   [Category.PERSONAL]: '#BC4B51',
-  [Category.HEALTH]: '#818CF8'
+  [Category.HEALTH]: '#49426E'
 };
 
 const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ events, setActiveTab }) => {

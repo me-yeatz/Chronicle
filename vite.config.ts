@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
             name: 'Chronicle',
             short_name: 'Chronicle',
             description: 'Design your time. Write your story. A minimalist personal planning and journaling app powered by Gemini AI.',
-            theme_color: '#32292F',
+            theme_color: '#322E53',
             background_color: '#F3EFE0',
             display: 'standalone',
             orientation: 'any',

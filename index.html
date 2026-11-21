@@ -7,7 +7,7 @@
 
     <!-- PWA Meta Tags -->
     <meta name="description" content="Design your time. Write your story. A minimalist personal planning and journaling app powered by Gemini AI.">
-    <meta name="theme-color" content="#32292F">
+    <meta name="theme-color" content="#322E53">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Chronicle">
@@ -25,14 +25,14 @@
           extend: {
             colors: {
               bone: '#F3EFE0',
-              charcoal: '#32292F',
-              'charcoal-light': '#4A3D46',
+              charcoal: '#322E53',
+              'charcoal-light': '#49426E',
               sage: '#8A9A5B',
               terra: '#BC4B51',
-              sand: '#D4C5C0',
-              peach: '#FFAB91',
-              cream: '#FFF5D1',
-              'cream-dark': '#FFEebb',
+              sand: '#F1C28E',
+              peach: '#F3AB9D',
+              cream: '#F1C28E',
+              'cream-dark': '#E2B078',
             },
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
@@ -48,7 +48,7 @@
     <style>
       html, body {
         background-color: #F3EFE0;
-        color: #32292F;
+        color: #322E53;
         overflow-x: hidden; /* Prevent horizontal scroll */
         overscroll-behavior-y: none; /* Prevent rubberbanding page jumps */
         -webkit-tap-highlight-color: transparent;
@@ -62,11 +62,11 @@
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: #D4C5C0;
+        background: #F1C28E;
         border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #32292F;
+        background: #322E53;
       }
 
       /* Ambient Background Animations */
@@ -109,9 +109,9 @@
 </head>
   <body>
     <!-- Background Gradient Blobs for Glass Effect -->
-    <div class="ambient-blob bg-peach/30 w-[40vw] h-[40vw] top-[-10%] left-[-10%]"></div>
-    <div class="ambient-blob bg-sage/20 w-[35vw] h-[35vw] bottom-[-5%] right-[-5%] animation-delay-2000"></div>
-    <div class="ambient-blob bg-cream/80 w-[25vw] h-[25vw] top-[30%] left-[30%] animation-delay-4000"></div>
+    <div class="ambient-blob bg-[#F3AB9D]/25 w-[40vw] h-[40vw] top-[-10%] left-[-10%]"></div>
+    <div class="ambient-blob bg-[#49426E]/15 w-[35vw] h-[35vw] bottom-[-5%] right-[-5%] animation-delay-2000"></div>
+    <div class="ambient-blob bg-[#F1C28E]/30 w-[25vw] h-[25vw] top-[30%] left-[30%] animation-delay-4000"></div>
     
     <div id="root"></div>
   <script type="module" src="/src/index.tsx"></script>
