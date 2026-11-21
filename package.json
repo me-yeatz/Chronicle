@@ -11,6 +11,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "preview:5500": "vite preview --port 5500",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && electron .\"",
     "electron:build": "vite build && node scripts/generate-ico.mjs && electron-builder",
     "electron:build:win": "vite build && node scripts/generate-ico.mjs && electron-builder --win",

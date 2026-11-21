@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Chronicle | Design your time</title>
 
     <!-- PWA Meta Tags -->
@@ -46,10 +46,12 @@
       }
     </script>
     <style>
-      body {
+      html, body {
         background-color: #F3EFE0;
         color: #32292F;
-        overflow-x: hidden; /* Prevent scroll from absolute blobs */
+        overflow-x: hidden; /* Prevent horizontal scroll */
+        overscroll-behavior-y: none; /* Prevent rubberbanding page jumps */
+        -webkit-tap-highlight-color: transparent;
       }
       /* Custom scrollbar for cleanliness */
       ::-webkit-scrollbar {
@@ -73,6 +75,9 @@
         border-radius: 50%;
         filter: blur(80px);
         z-index: -1;
+        pointer-events: none;
+        transform: translate3d(0, 0, 0);
+        will-change: transform;
         animation: float 20s infinite ease-in-out;
       }
       @keyframes float {
@@ -101,7 +106,6 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <!-- Background Gradient Blobs for Glass Effect -->

@@ -108,10 +108,11 @@ const callGemini = async (prompt: string, apiKey: string, model: string): Promis
   const { GoogleGenAI } = await import("@google/genai");
   const ai = new GoogleGenAI({ apiKey });
   
-  const genModel = ai.models.get(model === 'default' ? 'gemini-2.5-flash' : model);
-  const result = await genModel.generateContent(prompt);
-  const response = await result.response;
-  const text = response.text();
+  const response = await ai.models.generateContent({
+    model: model === 'default' ? 'gemini-2.5-flash' : model,
+    contents: prompt
+  });
+  const text = response.text || '';
   
   return { text, success: true };
 };

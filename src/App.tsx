@@ -261,7 +261,7 @@ const App: React.FC = () => {
       />
 
       {/* Main Content - Add padding for bottom navigation on mobile */}
-      <div className={`flex-1 md:ml-20 lg:ml-72 pb-20 md:pb-6 relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto transition-all duration-300`}>
+      <div className="flex-1 md:ml-20 lg:ml-72 pb-28 md:pb-8 relative p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto">
 
         {/* Header - Glass Style */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-10 gap-4 relative z-30">
@@ -362,7 +362,7 @@ const App: React.FC = () => {
               )}
             </div>
 
-            {activeTab !== 'vault' && (
+            {(activeTab === 'dashboard' || activeTab === 'reminders') && (
               <button
                 onClick={handleAddClick}
                 className="bg-charcoal/90 backdrop-blur-md text-bone px-4 md:px-8 py-3 md:py-4 rounded-2xl flex items-center gap-2 md:gap-3 text-sm md:text-base font-bold hover:bg-charcoal shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all border border-white/10"
@@ -520,8 +520,8 @@ const App: React.FC = () => {
       </div>
 
       {/* Bottom Navigation for Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/30 backdrop-blur-2xl border-t border-white/40 md:hidden z-50">
-        <div className="flex justify-around items-center p-3">
+      <nav aria-label="Mobile Navigation" className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-charcoal/10 shadow-[0_-4px_24px_rgba(50,41,47,0.08)] md:hidden z-50 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 px-2">
+        <div className="flex justify-around items-center">
           {[
             { id: 'dashboard', icon: CalendarIcon, label: 'Timeline' },
             { id: 'reminders', icon: Bell, label: 'Reminders' },
@@ -533,18 +533,18 @@ const App: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center p-2 rounded-xl transition-colors ${activeTab === item.id
-                ? 'text-charcoal bg-white/50'
-                : 'text-charcoal/60 hover:text-charcoal hover:bg-white/20'
+              className={`flex flex-col items-center py-1.5 px-2.5 rounded-2xl transition-all duration-200 ${activeTab === item.id
+                ? 'text-charcoal bg-charcoal/10 font-black shadow-sm scale-105'
+                : 'text-charcoal/60 hover:text-charcoal hover:bg-charcoal/5 font-semibold'
                 }`}
               title={item.label}
             >
-              <item.icon size={20} />
-              <span className="text-[9px] font-bold mt-1">{item.label}</span>
+              <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+              <span className="text-[10px] mt-1 tracking-tight">{item.label}</span>
             </button>
           ))}
         </div>
-      </div>
+      </nav>
 
       <EventModal
         isOpen={isModalOpen}

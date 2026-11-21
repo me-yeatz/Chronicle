@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare } from 'lucide-react';
 import { callAIProvider, AIConfig } from '../services/aiService';
 
 interface Message {
@@ -147,7 +147,7 @@ const AIChat: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-[calc(100vh-200px)] flex flex-col">
+    <div className="w-full h-[calc(100dvh-220px)] md:h-[calc(100vh-200px)] min-h-[460px] flex flex-col">
       <div className="bg-charcoal/90 backdrop-blur-xl rounded-3xl p-6 md:p-10 mb-6 text-bone flex items-center gap-6">
         <div className="hidden sm:flex w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl items-center justify-center border border-white/10 shadow-inner shrink-0 scale-110">
             <MessageSquare size={28} className="text-peach" />

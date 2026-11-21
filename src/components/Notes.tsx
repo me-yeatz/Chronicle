@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Note, CategoryItem } from '../types';
-import { Plus, Trash2, Calendar, Bell, BellOff, X, Save, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Calendar, Bell, BellOff, X, Save, Edit2, Book } from 'lucide-react';
 
 interface NotesProps {
     notes: Note[];
@@ -35,9 +35,13 @@ const Notes: React.FC<NotesProps> = ({ notes, categories, onAddNote, onUpdateNot
     const handleCreate = () => {
         if (!newTitle.trim() && !newContent.trim()) return;
 
+        const noteId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+            ? crypto.randomUUID()
+            : `note_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
         const note: Note = {
-            id: crypto.randomUUID(),
-            title: newTitle || 'Untitled Note',
+            id: noteId,
+            title: newTitle.trim() || 'Untitled Note',
             content: newContent,
             createdAt: new Date().toISOString(),
             category: newCategory,
@@ -105,8 +109,8 @@ const Notes: React.FC<NotesProps> = ({ notes, categories, onAddNote, onUpdateNot
 
             {/* Add Note Modal/Overlay */}
             {isAdding && (
-                <div className="fixed inset-0 bg-charcoal/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-2xl shadow-2xl border border-white/60 animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 bg-charcoal/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-white/60 animate-in zoom-in-95 duration-200">
                         <div className="flex justify-between items-start mb-6">
                             <h3 className="text-xl font-bold text-charcoal">Create Note</h3>
                             <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X size={20} /></button>
@@ -237,21 +241,21 @@ const Notes: React.FC<NotesProps> = ({ notes, categories, onAddNote, onUpdateNot
                                     {new Date(note.createdAt).toLocaleDateString()}
                                 </span>
 
-                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => startEditing(note)} className={`p-2 rounded-full hover:bg-black/5 ${isLight ? 'text-gray-400 hover:text-charcoal' : 'text-gray-500 hover:text-white'}`}>
+                                <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => startEditing(note)} className={`p-2 rounded-full hover:bg-black/5 ${isLight ? 'text-gray-400 hover:text-charcoal' : 'text-gray-500 hover:text-white'}`} title="Edit note">
                                         <Edit2 size={14} />
                                     </button>
-                                    <button onClick={() => onDeleteNote(note.id)} className={`p-2 rounded-full hover:bg-terra/10 hover:text-terra ${isLight ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    <button onClick={() => onDeleteNote(note.id)} className={`p-2 rounded-full hover:bg-terra/10 hover:text-terra ${isLight ? 'text-gray-400' : 'text-gray-500'}`} title="Delete note">
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
                             </div>
 
-                            {note.isReminderOn && (
-                                <div className="absolute top-6 right-6">
-                                    <div className="bg-terra text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                            {note.isReminderOn && note.reminderDate && (
+                                <div className="mt-3 flex items-center">
+                                    <div className="bg-terra text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
                                         <Bell size={10} />
-                                        {new Date(note.reminderDate!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                        <span>Reminder: {new Date(note.reminderDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                                     </div>
                                 </div>
                             )}
