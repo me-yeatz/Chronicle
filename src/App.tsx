@@ -13,7 +13,6 @@ import CalendarView from './components/CalendarView';
 import StorageNotification, { StorageWarningBanner } from './components/StorageNotification';
 import { PlanEvent, UserProfile, CategoryItem, Credential, DEFAULT_CATEGORIES, Category, Note } from './types';
 import { Plus, Bell, Sparkles, Calendar as CalendarIcon, ArrowUpRight, Check, Feather, ChevronLeft, Lock, BarChart2, Book, MessageSquare, Info } from 'lucide-react';
-import { analyzeSchedule, generateJournalReflection } from './services/aiService';
 import { db } from './db/database';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -121,8 +120,6 @@ const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<PlanEvent | null>(null);
-  const [aiInsight, setAiInsight] = useState<string>('');
-  const [loadingAi, setLoadingAi] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   // Storage notification state - simplified since DB handles most of it
@@ -194,7 +191,6 @@ const App: React.FC = () => {
       await db.userProfile.put({ id: 'main', data: DEFAULT_USER });
       await db.categories.put({ id: 'main', data: DEFAULT_CATEGORIES });
       clearAllChronicleData(); // Clear localStorage too
-      setAiInsight('');
     }
   };
 
@@ -207,18 +203,6 @@ const App: React.FC = () => {
       handleClearAllData();
     }
   };
-
-  const triggerAIAnalysis = async () => {
-    setLoadingAi(true);
-    const insight = await analyzeSchedule(events);
-    setAiInsight(insight);
-    setLoadingAi(false);
-  };
-
-  // Trigger analysis on load if empty
-  useEffect(() => {
-    if (!aiInsight) triggerAIAnalysis();
-  }, []);
 
   // Reminder Logic
   // Reminder Logic
@@ -380,45 +364,64 @@ const App: React.FC = () => {
           {activeTab === 'dashboard' && (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 auto-rows-min">
 
-              {/* Card 1: AI Insight (Peach Glass) */}
-              <div className="col-span-1 md:col-span-8 bg-peach/80 backdrop-blur-2xl rounded-3xl md:rounded-4xl p-5 md:p-8 shadow-lg border border-white/30 relative overflow-hidden group transition-all hover:shadow-xl hover:bg-peach/90">
-                <div className="relative z-10 h-full flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                    <div className="w-10 h-10 md:w-12 md:h-12 bg-white/40 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/40 shadow-inner shrink-0">
-                      <Sparkles className="text-charcoal" size={22} />
-                    </div>
-                    <button
-                      onClick={triggerAIAnalysis}
-                      disabled={loadingAi}
-                      className="bg-charcoal/20 hover:bg-charcoal/30 backdrop-blur-md text-charcoal text-[10px] md:text-xs font-bold px-3 py-1.5 md:px-4 md:py-2 rounded-full transition-all border border-white/10"
-                    >
-                      {loadingAi ? 'Thinking...' : 'REFRESH'}
-                    </button>
-                  </div>
-                  <div className="mt-4 md:mt-6">
-                    <h3 className="font-bold text-lg md:text-2xl text-charcoal mb-1 md:mb-2">Daily Insight</h3>
-                    <p className="text-charcoal/90 text-sm md:text-lg leading-relaxed font-medium max-w-2xl">
-                      {aiInsight || "Analyzing your schedule..."}
-                    </p>
-                  </div>
-                </div>
-                {/* Decorative Abstract Shape */}
-                <div className="absolute right-[-20px] top-[-20px] w-40 h-40 md:w-64 md:h-64 bg-white/20 rounded-full blur-3xl group-hover:bg-white/30 transition-all"></div>
-              </div>
-
-              {/* Card 2: Date (Frosted White) */}
-              <div className="col-span-1 md:col-span-4 bg-white/40 backdrop-blur-xl rounded-3xl md:rounded-4xl p-5 md:p-8 shadow-lg flex flex-col justify-between border border-white/50 hover:border-peach/50 transition-colors group min-h-[140px] md:min-h-auto">
+              {/* Card 1: Date (Frosted White) */}
+              <div className="col-span-1 md:col-span-4 bg-white/40 backdrop-blur-xl rounded-3xl md:rounded-4xl p-5 md:p-8 shadow-lg flex flex-col justify-between border border-white/50 hover:border-peach/50 transition-colors group min-h-[200px]">
                 <div className="flex justify-between items-center">
                   <span className="text-charcoal/50 font-bold tracking-wider text-[10px] md:text-xs uppercase">Today</span>
-                  <ArrowUpRight className="text-charcoal/40 group-hover:text-peach transition-colors" />
+                  <div className="w-8 h-8 rounded-xl bg-peach/20 flex items-center justify-center text-charcoal/70">
+                    <CalendarIcon size={16} />
+                  </div>
                 </div>
                 <div>
                   <div className="text-4xl md:text-5xl font-black text-charcoal mb-1">{new Date().getDate()}</div>
-                  <div className="text-sm md:text-xl text-charcoal/60 font-medium">{new Date().toLocaleDateString('en-US', { month: 'long', weekday: 'long' })}</div>
+                  <div className="text-sm md:text-base text-charcoal/60 font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long', weekday: 'long' })}</div>
+                </div>
+                <div className="pt-3 border-t border-black/5 flex items-center justify-between text-xs text-charcoal/60 font-medium">
+                  <span>Upcoming Events</span>
+                  <span className="font-bold text-charcoal">{events.filter(e => new Date(e.endDate) >= new Date()).length}</span>
                 </div>
               </div>
 
-              {/* Card 3: Timeline/Calendar (Frosted White Large) */}
+              {/* Card 2: Upcoming (Frosted Cream) */}
+              <div className="col-span-1 md:col-span-4 bg-cream/70 backdrop-blur-xl rounded-3xl md:rounded-4xl p-5 md:p-8 shadow-lg border border-white/40 flex flex-col justify-between min-h-[200px]">
+                <h3 className="text-lg md:text-xl font-bold text-charcoal mb-3 flex items-center gap-2">
+                  <CalendarIcon size={18} className="text-charcoal md:w-5 md:h-5" />
+                  <span>Upcoming</span>
+                </h3>
+                <div className="space-y-2.5">
+                  {events
+                    .filter(e => new Date(e.endDate) >= new Date())
+                    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+                    .slice(0, 3)
+                    .map(event => (
+                      <div key={event.id} onClick={() => handleEditClick(event)} className="bg-white/50 backdrop-blur-sm p-3 rounded-2xl cursor-pointer hover:bg-white/80 transition-colors flex items-center gap-3 group border border-white/30 hover:border-white/60 hover:shadow-sm">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0 ${event.category === Category.WORK ? 'bg-charcoal text-white' :
+                          event.category === Category.STUDY ? 'bg-sage text-white' :
+                            event.category === Category.TRAVEL ? 'bg-peach text-charcoal' : 'bg-terra text-white'
+                          }`}>
+                          {event.title.charAt(0)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-charcoal text-xs md:text-sm leading-tight group-hover:text-terra transition-colors truncate">{event.title}</h4>
+                          <p className="text-[10px] text-charcoal/60 font-semibold mt-0.5">{new Date(event.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
+                        </div>
+                      </div>
+                    ))}
+                  {events.length === 0 && <p className="text-charcoal/50 italic text-sm">Nothing on the horizon.</p>}
+                </div>
+              </div>
+
+              {/* Card 3: Stats (Frosted Dark) */}
+              <div className="col-span-1 md:col-span-4 bg-charcoal/90 backdrop-blur-xl rounded-3xl md:rounded-4xl p-5 md:p-6 shadow-lg flex flex-col justify-between relative overflow-hidden border border-white/10 min-h-[200px]">
+                <div className="relative z-10 flex-1 w-full">
+                  <h3 className="text-lg md:text-xl font-bold text-bone mb-1">Focus Distribution</h3>
+                  <StatsChart events={events} variant="dark" />
+                </div>
+                {/* Glass reflection on dark card */}
+                <div className="absolute right-0 bottom-0 w-full h-full bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
+              </div>
+
+              {/* Card 4: Timeline/Calendar (Frosted White Large) */}
               <div className="col-span-1 md:col-span-12 bg-white/40 backdrop-blur-xl rounded-3xl md:rounded-4xl p-1 shadow-lg border border-white/50 relative group">
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex bg-white/20 p-1 rounded-xl border border-white/30 backdrop-blur-md shadow-sm">
                    <button 
@@ -440,45 +443,6 @@ const App: React.FC = () => {
                 ) : (
                   <CalendarView events={events} onEventClick={handleEditClick} categories={categories} />
                 )}
-              </div>
-
-              {/* Card 4: Upcoming (Frosted Cream) */}
-              <div className="col-span-1 md:col-span-5 lg:col-span-4 bg-cream/70 backdrop-blur-xl rounded-3xl md:rounded-4xl p-5 md:p-8 shadow-lg border border-white/40">
-                <h3 className="text-lg md:text-xl font-bold text-charcoal mb-4 md:mb-6 flex items-center gap-2">
-                  <CalendarIcon size={18} className="text-charcoal md:w-5 md:h-5" />
-                  <span>Upcoming</span>
-                </h3>
-                <div className="space-y-3 md:space-y-4">
-                  {events
-                    .filter(e => new Date(e.endDate) >= new Date())
-                    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-                    .slice(0, 3)
-                    .map(event => (
-                      <div key={event.id} onClick={() => handleEditClick(event)} className="bg-white/50 backdrop-blur-sm p-4 rounded-2xl cursor-pointer hover:bg-white/80 transition-colors flex items-center gap-4 group border border-white/30 hover:border-white/60 hover:shadow-md">
-                        <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center font-bold text-base md:text-lg shadow-sm flex-shrink-0 ${event.category === Category.WORK ? 'bg-charcoal text-white' :
-                          event.category === Category.STUDY ? 'bg-sage text-white' :
-                            event.category === Category.TRAVEL ? 'bg-peach text-charcoal' : 'bg-terra text-white'
-                          }`}>
-                          {event.title.charAt(0)}
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-charcoal text-sm md:text-base leading-tight group-hover:text-terra transition-colors truncate">{event.title}</h4>
-                          <p className="text-xs text-charcoal/60 font-semibold mt-1">{new Date(event.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
-                        </div>
-                      </div>
-                    ))}
-                  {events.length === 0 && <p className="text-charcoal/50 italic text-sm">Nothing on the horizon.</p>}
-                </div>
-              </div>
-
-              {/* Card 5: Stats (Frosted Dark) */}
-              <div className="col-span-1 md:col-span-7 lg:col-span-8 bg-charcoal/90 backdrop-blur-xl rounded-3xl md:rounded-4xl p-5 md:p-6 shadow-lg flex flex-col md:flex-row items-center relative overflow-hidden border border-white/10">
-                <div className="relative z-10 flex-1 w-full">
-                  <h3 className="text-lg md:text-xl font-bold text-bone mb-2 ml-2 md:ml-4">Focus Distribution</h3>
-                  <StatsChart events={events} variant="dark" title="Focus Distribution" />
-                </div>
-                {/* Glass reflection on dark card */}
-                <div className="absolute right-0 bottom-0 w-full h-full bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
               </div>
 
             </div>
